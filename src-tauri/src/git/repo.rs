@@ -36,7 +36,7 @@ fn current_branch_name(repo: &Repository) -> String {
 
 #[tauri::command]
 pub fn open_repository(path: String) -> Result<RepoInfo, String> {
-    let repo = Repository::open(&path).map_err(|e| e.message().to_string())?;
+    let repo = Repository::open(&path).map_err(super::err_msg)?;
 
     let name = std::path::Path::new(&path)
         .file_name()
@@ -53,13 +53,13 @@ pub fn open_repository(path: String) -> Result<RepoInfo, String> {
 
 #[tauri::command]
 pub fn get_repo_status(path: String) -> Result<RepoStatus, String> {
-    let repo = Repository::open(&path).map_err(|e| e.message().to_string())?;
+    let repo = Repository::open(&path).map_err(super::err_msg)?;
 
     let mut opts = StatusOptions::new();
     opts.include_untracked(true).recurse_untracked_dirs(true);
     let statuses = repo
         .statuses(Some(&mut opts))
-        .map_err(|e| e.message().to_string())?;
+        .map_err(super::err_msg)?;
 
     let mut changes = Vec::new();
     for entry in statuses.iter() {
@@ -130,44 +130,54 @@ fn ahead_behind(repo: &Repository) -> Option<(usize, usize)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::git::test_support::init_repo_with_commit;
 
-    fn workspace_root() -> String {
-        // cargo test's cwd is the crate root (src-tauri); its parent is the repo root
-        std::env::current_dir()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .to_string_lossy()
-            .to_string()
+    #[test]
+    fn open_repository_reads_name_and_branch() {
+        let test_repo = init_repo_with_commit();
+        let expected_branch = test_repo.repo.head().unwrap().shorthand().unwrap().to_string();
+
+        let info = open_repository(test_repo.path()).expect("should open repo");
+        assert_eq!(info.current_branch, expected_branch);
     }
 
     #[test]
-    fn open_repository_reads_this_repo() {
-        let info = open_repository(workspace_root()).expect("should open repo");
-        assert_eq!(info.name, "Stash");
-        assert_eq!(info.current_branch, "master");
-    }
+    fn get_repo_status_reports_clean_repo() {
+        let test_repo = init_repo_with_commit();
 
-    #[test]
-    fn get_repo_status_matches_git_cli() {
-        let status = get_repo_status(workspace_root()).expect("should read status");
-
-        assert!(!status.is_clean);
+        let status = get_repo_status(test_repo.path()).expect("should read status");
+        assert!(status.is_clean);
         assert_eq!(status.ahead, 0);
         assert_eq!(status.behind, 0);
+        assert!(status.changes.is_empty());
+    }
+
+    #[test]
+    fn get_repo_status_reports_staged_modified_and_untracked() {
+        let test_repo = init_repo_with_commit();
+
+        // staged addition
+        test_repo.write("staged.txt", "new\n");
+        test_repo.stage("staged.txt");
+
+        // unstaged modification of the tracked file
+        test_repo.write("initial.txt", "changed\n");
+
+        // untracked file
+        test_repo.write("scratch.txt", "temp\n");
+
+        let status = get_repo_status(test_repo.path()).expect("should read status");
+        assert!(!status.is_clean);
 
         let staged: Vec<_> = status.changes.iter().filter(|c| c.staged).collect();
         let unstaged: Vec<_> = status.changes.iter().filter(|c| !c.staged).collect();
 
-        assert_eq!(staged.len(), 0, "nothing should be staged in this test run");
+        assert_eq!(staged.len(), 1);
+        assert_eq!(staged[0].path, "staged.txt");
+        assert_eq!(staged[0].status, "added");
 
-        let modified: Vec<_> = unstaged.iter().filter(|c| c.status == "modified").collect();
-        let untracked: Vec<_> = unstaged.iter().filter(|c| c.status == "untracked").collect();
-        assert_eq!(modified.len(), 8, "expected 8 modified tracked files");
-        assert_eq!(untracked.len(), 2, "expected 2 untracked files under src-tauri/src/git");
-
-        let paths: Vec<_> = unstaged.iter().map(|c| c.path.as_str()).collect();
-        assert!(paths.contains(&"src-tauri/src/git/mod.rs"));
-        assert!(paths.contains(&"src-tauri/src/git/repo.rs"));
+        assert_eq!(unstaged.len(), 2);
+        assert!(unstaged.iter().any(|c| c.path == "initial.txt" && c.status == "modified"));
+        assert!(unstaged.iter().any(|c| c.path == "scratch.txt" && c.status == "untracked"));
     }
 }

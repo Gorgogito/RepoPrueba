@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
+import BranchSidebar, { BranchInfo } from "./components/BranchSidebar";
 import "./App.css";
 
 interface RepoInfo {
@@ -25,7 +26,19 @@ interface RepoStatus {
 function App() {
   const [repo, setRepo] = useState<RepoInfo | null>(null);
   const [status, setStatus] = useState<RepoStatus | null>(null);
+  const [branches, setBranches] = useState<BranchInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  async function loadRepoData(path: string) {
+    const [info, repoStatus, branchList] = await Promise.all([
+      invoke<RepoInfo>("open_repository", { path }),
+      invoke<RepoStatus>("get_repo_status", { path }),
+      invoke<BranchInfo[]>("list_branches", { path }),
+    ]);
+    setRepo(info);
+    setStatus(repoStatus);
+    setBranches(branchList);
+  }
 
   async function openRepository() {
     setError(null);
@@ -33,13 +46,20 @@ function App() {
     if (!selected || Array.isArray(selected)) return;
 
     try {
-      const info = await invoke<RepoInfo>("open_repository", { path: selected });
-      const repoStatus = await invoke<RepoStatus>("get_repo_status", { path: selected });
-      setRepo(info);
-      setStatus(repoStatus);
+      await loadRepoData(selected);
     } catch (err) {
       setRepo(null);
       setStatus(null);
+      setBranches([]);
+      setError(String(err));
+    }
+  }
+
+  async function refresh() {
+    if (!repo) return;
+    try {
+      await loadRepoData(repo.path);
+    } catch (err) {
       setError(String(err));
     }
   }
@@ -48,7 +68,7 @@ function App() {
   const unstaged = status?.changes.filter((c) => !c.staged) ?? [];
 
   return (
-    <main className="container">
+    <div className="app-shell">
       <header className="toolbar">
         <button onClick={openRepository}>Abrir repositorio</button>
         {repo && (
@@ -64,46 +84,54 @@ function App() {
         )}
       </header>
 
-      {error && <p className="error">{error}</p>}
+      <div className="app-body">
+        {repo && (
+          <BranchSidebar repoPath={repo.path} branches={branches} onChanged={refresh} onError={setError} />
+        )}
 
-      {repo && status && (
-        <div className="status">
-          <p className="repo-path">{repo.path}</p>
-          {status.is_clean ? (
-            <p className="clean">Sin cambios pendientes</p>
-          ) : (
-            <>
-              {staged.length > 0 && (
-                <section>
-                  <h3>Staged ({staged.length})</h3>
-                  <ul>
-                    {staged.map((c) => (
-                      <li key={`s-${c.path}`}>
-                        <span className={`status-tag ${c.status}`}>{c.status}</span> {c.path}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
+        <main className="container">
+          {error && <p className="error">{error}</p>}
+
+          {repo && status && (
+            <div className="status">
+              <p className="repo-path">{repo.path}</p>
+              {status.is_clean ? (
+                <p className="clean">Sin cambios pendientes</p>
+              ) : (
+                <>
+                  {staged.length > 0 && (
+                    <section>
+                      <h3>Staged ({staged.length})</h3>
+                      <ul>
+                        {staged.map((c) => (
+                          <li key={`s-${c.path}`}>
+                            <span className={`status-tag ${c.status}`}>{c.status}</span> {c.path}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                  {unstaged.length > 0 && (
+                    <section>
+                      <h3>Sin stage ({unstaged.length})</h3>
+                      <ul>
+                        {unstaged.map((c) => (
+                          <li key={`u-${c.path}`}>
+                            <span className={`status-tag ${c.status}`}>{c.status}</span> {c.path}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                </>
               )}
-              {unstaged.length > 0 && (
-                <section>
-                  <h3>Sin stage ({unstaged.length})</h3>
-                  <ul>
-                    {unstaged.map((c) => (
-                      <li key={`u-${c.path}`}>
-                        <span className={`status-tag ${c.status}`}>{c.status}</span> {c.path}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-            </>
+            </div>
           )}
-        </div>
-      )}
 
-      {!repo && !error && <p className="hint">Selecciona un repositorio local para ver su estado.</p>}
-    </main>
+          {!repo && !error && <p className="hint">Selecciona un repositorio local para ver su estado.</p>}
+        </main>
+      </div>
+    </div>
   );
 }
 
