@@ -1,49 +1,108 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 import "./App.css";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+interface RepoInfo {
+  path: string;
+  name: string;
+  current_branch: string;
+}
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
+interface FileChange {
+  path: string;
+  staged: boolean;
+  status: string;
+}
+
+interface RepoStatus {
+  is_clean: boolean;
+  ahead: number;
+  behind: number;
+  changes: FileChange[];
+}
+
+function App() {
+  const [repo, setRepo] = useState<RepoInfo | null>(null);
+  const [status, setStatus] = useState<RepoStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function openRepository() {
+    setError(null);
+    const selected = await open({ directory: true, multiple: false });
+    if (!selected || Array.isArray(selected)) return;
+
+    try {
+      const info = await invoke<RepoInfo>("open_repository", { path: selected });
+      const repoStatus = await invoke<RepoStatus>("get_repo_status", { path: selected });
+      setRepo(info);
+      setStatus(repoStatus);
+    } catch (err) {
+      setRepo(null);
+      setStatus(null);
+      setError(String(err));
+    }
   }
+
+  const staged = status?.changes.filter((c) => c.staged) ?? [];
+  const unstaged = status?.changes.filter((c) => !c.staged) ?? [];
 
   return (
     <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+      <header className="toolbar">
+        <button onClick={openRepository}>Abrir repositorio</button>
+        {repo && (
+          <div className="repo-summary">
+            <strong>{repo.name}</strong>
+            <span className="branch">{repo.current_branch}</span>
+            {status && (status.ahead > 0 || status.behind > 0) && (
+              <span className="sync">
+                {status.ahead > 0 && `↑${status.ahead}`} {status.behind > 0 && `↓${status.behind}`}
+              </span>
+            )}
+          </div>
+        )}
+      </header>
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
+      {error && <p className="error">{error}</p>}
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
+      {repo && status && (
+        <div className="status">
+          <p className="repo-path">{repo.path}</p>
+          {status.is_clean ? (
+            <p className="clean">Sin cambios pendientes</p>
+          ) : (
+            <>
+              {staged.length > 0 && (
+                <section>
+                  <h3>Staged ({staged.length})</h3>
+                  <ul>
+                    {staged.map((c) => (
+                      <li key={`s-${c.path}`}>
+                        <span className={`status-tag ${c.status}`}>{c.status}</span> {c.path}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+              {unstaged.length > 0 && (
+                <section>
+                  <h3>Sin stage ({unstaged.length})</h3>
+                  <ul>
+                    {unstaged.map((c) => (
+                      <li key={`u-${c.path}`}>
+                        <span className={`status-tag ${c.status}`}>{c.status}</span> {c.path}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {!repo && !error && <p className="hint">Selecciona un repositorio local para ver su estado.</p>}
     </main>
   );
 }

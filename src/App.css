@@ -1,116 +1,135 @@
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
-}
-
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafb);
-}
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
-
-  color: #0f0f0f;
-  background-color: #f6f6f6;
-
+  font-size: 14px;
+  line-height: 1.5;
+  color: #16181d;
+  background-color: #f6f6f7;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
 }
 
 .container {
-  margin: 0;
-  padding-top: 10vh;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.toolbar {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: center;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
-}
-
-.logo.tauri:hover {
-  filter: drop-shadow(0 0 2em #24c8db);
-}
-
-.row {
-  display: flex;
-  justify-content: center;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-
-a:hover {
-  color: #535bf2;
-}
-
-h1 {
-  text-align: center;
-}
-
-input,
 button {
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
+  padding: 0.5em 1em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
-  transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
-}
-
-button {
+  color: #ffffff;
+  background-color: #396cd8;
   cursor: pointer;
 }
 
 button:hover {
-  border-color: #396cd8;
-}
-button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
+  background-color: #2f5bb8;
 }
 
-input,
-button {
-  outline: none;
+.repo-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
 }
 
-#greet-input {
-  margin-right: 5px;
+.branch {
+  font-family: "SF Mono", Consolas, monospace;
+  background: #e5e7eb;
+  padding: 0.1em 0.5em;
+  border-radius: 4px;
+  font-size: 0.85em;
 }
+
+.sync {
+  font-family: "SF Mono", Consolas, monospace;
+  font-size: 0.85em;
+  color: #6b7280;
+}
+
+.repo-path {
+  color: #6b7280;
+  font-size: 0.85em;
+  margin-bottom: 1rem;
+  word-break: break-all;
+}
+
+.clean {
+  color: #16a34a;
+}
+
+.error {
+  color: #dc2626;
+}
+
+.hint {
+  color: #6b7280;
+}
+
+section {
+  margin-bottom: 1rem;
+}
+
+section h3 {
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  margin-bottom: 0.4em;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+li {
+  padding: 0.25em 0;
+  font-size: 0.9em;
+  font-family: "SF Mono", Consolas, monospace;
+}
+
+.status-tag {
+  display: inline-block;
+  min-width: 4.5em;
+  font-weight: 600;
+  font-size: 0.85em;
+}
+
+.status-tag.modified { color: #d97706; }
+.status-tag.added { color: #16a34a; }
+.status-tag.deleted { color: #dc2626; }
+.status-tag.untracked { color: #6b7280; }
+.status-tag.renamed { color: #2563eb; }
+.status-tag.conflicted { color: #dc2626; font-weight: 700; }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
+    color: #e5e7eb;
+    background-color: #1a1b1e;
   }
 
-  a:hover {
-    color: #24c8db;
+  .branch {
+    background: #2d2f34;
   }
 
-  input,
-  button {
-    color: #ffffff;
-    background-color: #0f0f0f98;
-  }
-  button:active {
-    background-color: #0f0f0f69;
+  .repo-path,
+  .sync,
+  .hint,
+  section h3 {
+    color: #9ca3af;
   }
 }
