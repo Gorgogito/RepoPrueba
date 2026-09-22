@@ -11,7 +11,10 @@ pub fn run() {
             git::branches::list_branches,
             git::branches::create_branch,
             git::branches::checkout_branch,
-            git::branches::delete_branch
+            git::branches::delete_branch,
+            git::changes::stage_file,
+            git::changes::unstage_file,
+            git::changes::commit
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

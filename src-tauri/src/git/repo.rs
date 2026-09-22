@@ -10,17 +10,17 @@ pub struct RepoInfo {
 
 #[derive(Serialize)]
 pub struct FileChange {
-    path: String,
-    staged: bool,
-    status: String,
+    pub(crate) path: String,
+    pub(crate) staged: bool,
+    pub(crate) status: String,
 }
 
 #[derive(Serialize)]
 pub struct RepoStatus {
-    is_clean: bool,
+    pub(crate) is_clean: bool,
     ahead: usize,
     behind: usize,
-    changes: Vec<FileChange>,
+    pub(crate) changes: Vec<FileChange>,
 }
 
 fn current_branch_name(repo: &Repository) -> String {

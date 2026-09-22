@@ -217,6 +217,69 @@ li {
   font-size: 0.85em;
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.link-button {
+  background: transparent;
+  border: none;
+  color: #396cd8;
+  font-size: 0.8em;
+  padding: 0;
+  box-shadow: none;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+  background: transparent;
+}
+
+.file-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: inherit;
+  border: none;
+  box-shadow: none;
+  padding: 0.15em 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.file-row:hover {
+  background: #eceef1;
+}
+
+.commit-form {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 420px;
+}
+
+.commit-form textarea {
+  font-family: inherit;
+  font-size: 0.9em;
+  padding: 0.5em;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  resize: vertical;
+}
+
+.commit-form button {
+  align-self: flex-end;
+}
+
+.commit-form button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .status-tag.modified { color: #d97706; }
 .status-tag.added { color: #16a34a; }
 .status-tag.deleted { color: #dc2626; }
@@ -254,5 +317,15 @@ li {
 
   .branch-list li:hover {
     background: #26282d;
+  }
+
+  .file-row:hover {
+    background: #26282d;
+  }
+
+  .commit-form textarea {
+    background: #1f2023;
+    color: #e5e7eb;
+    border-color: #4b4f56;
   }
 }

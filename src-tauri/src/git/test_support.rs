@@ -47,6 +47,13 @@ impl TestRepo {
 pub fn init_repo_with_commit() -> TestRepo {
     let dir = TempDir::new().unwrap();
     let repo = Repository::init(dir.path()).unwrap();
+
+    // Repo-local identity so `repo.signature()` works without depending on
+    // whatever global git config happens to be present on the test machine.
+    let mut config = repo.config().unwrap();
+    config.set_str("user.name", "Test").unwrap();
+    config.set_str("user.email", "test@example.com").unwrap();
+
     let test_repo = TestRepo { dir, repo };
 
     test_repo.write("initial.txt", "hello\n");
