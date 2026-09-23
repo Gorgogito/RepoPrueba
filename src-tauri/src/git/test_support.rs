@@ -20,25 +20,30 @@ impl TestRepo {
     }
 
     pub fn stage(&self, relative: &str) {
-        let mut index = self.repo.index().unwrap();
+        // Fresh handle, like every real command — self.repo's in-memory index
+        // can go stale after disk writes made through other fresh handles
+        // (e.g. our checkout_branch), and reusing it here would silently
+        // resurrect entries that were already removed on disk.
+        let repo = Repository::open(self.dir.path()).unwrap();
+        let mut index = repo.index().unwrap();
         index.add_path(std::path::Path::new(relative)).unwrap();
         index.write().unwrap();
     }
 
     pub fn commit(&self, message: &str) -> git2::Oid {
+        let repo = Repository::open(self.dir.path()).unwrap();
         let sig = Signature::now("Test", "test@example.com").unwrap();
-        let mut index = self.repo.index().unwrap();
+        let mut index = repo.index().unwrap();
         let tree_oid = index.write_tree().unwrap();
-        let tree = self.repo.find_tree(tree_oid).unwrap();
+        let tree = repo.find_tree(tree_oid).unwrap();
 
-        let parents: Vec<git2::Commit> = match self.repo.head() {
+        let parents: Vec<git2::Commit> = match repo.head() {
             Ok(head) => vec![head.peel_to_commit().unwrap()],
             Err(_) => vec![],
         };
         let parent_refs: Vec<&git2::Commit> = parents.iter().collect();
 
-        self.repo
-            .commit(Some("HEAD"), &sig, &sig, message, &tree, &parent_refs)
+        repo.commit(Some("HEAD"), &sig, &sig, message, &tree, &parent_refs)
             .unwrap()
     }
 }
@@ -61,6 +66,9 @@ pub fn init_repo_with_commit() -> TestRepo {
     let mut config = repo.config().unwrap();
     config.set_str("user.name", "Test").unwrap();
     config.set_str("user.email", "test@example.com").unwrap();
+    // Keep line endings byte-for-byte regardless of the host's global
+    // core.autocrlf, so assertions on file contents are deterministic.
+    config.set_str("core.autocrlf", "false").unwrap();
 
     let test_repo = TestRepo { dir, repo };
 

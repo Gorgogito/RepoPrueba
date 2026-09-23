@@ -1,4 +1,4 @@
-use super::err_msg;
+use super::{ensure_clean_workdir, err_msg};
 use git2::{BranchType, Repository};
 use serde::Serialize;
 
@@ -44,13 +44,23 @@ pub fn create_branch(path: String, name: String) -> Result<(), String> {
 #[tauri::command]
 pub fn checkout_branch(path: String, name: String) -> Result<(), String> {
     let repo = Repository::open(&path).map_err(err_msg)?;
+    ensure_clean_workdir(&repo)?;
     let refname = format!("refs/heads/{name}");
 
     let target = repo.revparse_single(&refname).map_err(err_msg)?;
     let mut checkout = git2::build::CheckoutBuilder::new();
-    checkout.safe();
+    checkout.force();
     repo.checkout_tree(&target, Some(&mut checkout)).map_err(err_msg)?;
     repo.set_head(&refname).map_err(err_msg)?;
+
+    // checkout_tree updates the working directory but, empirically, does not
+    // reliably persist the index to match — do that explicitly so status
+    // (and any later ensure_clean_workdir check) reflects reality.
+    let target_tree = target.peel_to_tree().map_err(err_msg)?;
+    let mut index = repo.index().map_err(err_msg)?;
+    index.read_tree(&target_tree).map_err(err_msg)?;
+    index.write().map_err(err_msg)?;
+
     Ok(())
 }
 

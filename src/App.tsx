@@ -4,6 +4,8 @@ import { open } from "@tauri-apps/plugin-dialog";
 import BranchSidebar, { BranchInfo } from "./components/BranchSidebar";
 import CommitPanel, { RepoStatus } from "./components/CommitPanel";
 import RemoteControls, { RemoteInfo } from "./components/RemoteControls";
+import StashPanel, { StashInfo } from "./components/StashPanel";
+import HistoryTools from "./components/HistoryTools";
 import "./App.css";
 
 interface RepoInfo {
@@ -17,19 +19,22 @@ function App() {
   const [status, setStatus] = useState<RepoStatus | null>(null);
   const [branches, setBranches] = useState<BranchInfo[]>([]);
   const [remotes, setRemotes] = useState<RemoteInfo[]>([]);
+  const [stashes, setStashes] = useState<StashInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   async function loadRepoData(path: string) {
-    const [info, repoStatus, branchList, remoteList] = await Promise.all([
+    const [info, repoStatus, branchList, remoteList, stashList] = await Promise.all([
       invoke<RepoInfo>("open_repository", { path }),
       invoke<RepoStatus>("get_repo_status", { path }),
       invoke<BranchInfo[]>("list_branches", { path }),
       invoke<RemoteInfo[]>("list_remotes", { path }),
+      invoke<StashInfo[]>("stash_list", { path }),
     ]);
     setRepo(info);
     setStatus(repoStatus);
     setBranches(branchList);
     setRemotes(remoteList);
+    setStashes(stashList);
   }
 
   async function openRepository() {
@@ -44,6 +49,7 @@ function App() {
       setStatus(null);
       setBranches([]);
       setRemotes([]);
+      setStashes([]);
       setError(String(err));
     }
   }
@@ -85,7 +91,16 @@ function App() {
 
       <div className="app-body">
         {repo && (
-          <BranchSidebar repoPath={repo.path} branches={branches} onChanged={refresh} onError={setError} />
+          <>
+            <BranchSidebar repoPath={repo.path} branches={branches} onChanged={refresh} onError={setError} />
+            <StashPanel
+              repoPath={repo.path}
+              stashes={stashes}
+              canStash={!!status && !status.is_clean}
+              onChanged={refresh}
+              onError={setError}
+            />
+          </>
         )}
 
         <main className="container">
@@ -95,6 +110,7 @@ function App() {
             <>
               <p className="repo-path">{repo.path}</p>
               <CommitPanel repoPath={repo.path} status={status} onChanged={refresh} onError={setError} />
+              <HistoryTools repoPath={repo.path} onChanged={refresh} onError={setError} />
             </>
           )}
 

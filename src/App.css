@@ -105,10 +105,19 @@ button:disabled {
   font-size: 1em;
 }
 
+.branch-actions {
+  display: flex;
+  gap: 0.25rem;
+  visibility: hidden;
+}
+
+.branch-list li:hover .branch-actions {
+  visibility: visible;
+}
+
 .icon-button.delete {
   color: #dc2626;
   border-color: transparent;
-  visibility: hidden;
 }
 
 .new-branch-form {
@@ -138,10 +147,6 @@ button:disabled {
 
 .branch-list li:hover {
   background: #eceef1;
-}
-
-.branch-list li:hover .icon-button.delete {
-  visibility: visible;
 }
 
 .branch-list li.current .branch-name {
@@ -218,6 +223,46 @@ button:hover {
 
 .hint {
   color: #6b7280;
+}
+
+.hint.small {
+  font-size: 0.8em;
+  margin: 0.5rem 0;
+}
+
+.stash-entry {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-tools {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  max-width: 520px;
+}
+
+.history-tools h3 {
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  margin-bottom: 0.3em;
+}
+
+.history-tools-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.history-tools-row input {
+  flex: 1;
+  padding: 0.4em 0.6em;
+  font-size: 0.85em;
+  font-family: "SF Mono", Consolas, monospace;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
 }
 
 section {
@@ -373,6 +418,16 @@ li {
   }
 
   .remote-form input {
+    background: #1f2023;
+    color: #e5e7eb;
+    border-color: #4b4f56;
+  }
+
+  .history-tools {
+    border-color: #33353a;
+  }
+
+  .history-tools-row input {
     background: #1f2023;
     color: #e5e7eb;
     border-color: #4b4f56;

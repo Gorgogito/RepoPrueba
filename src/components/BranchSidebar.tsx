@@ -17,6 +17,7 @@ interface Props {
 function BranchSidebar({ repoPath, branches, onChanged, onError }: Props) {
   const [newBranchName, setNewBranchName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [busyBranch, setBusyBranch] = useState<string | null>(null);
 
   async function handleSwitch(name: string) {
     try {
@@ -51,6 +52,30 @@ function BranchSidebar({ repoPath, branches, onChanged, onError }: Props) {
     }
   }
 
+  async function handleMerge(name: string) {
+    setBusyBranch(name);
+    try {
+      await invoke("merge_branch", { path: repoPath, branch: name });
+      onChanged();
+    } catch (err) {
+      onError(String(err));
+    } finally {
+      setBusyBranch(null);
+    }
+  }
+
+  async function handleRebase(name: string) {
+    setBusyBranch(name);
+    try {
+      await invoke("rebase_branch", { path: repoPath, ontoBranch: name });
+      onChanged();
+    } catch (err) {
+      onError(String(err));
+    } finally {
+      setBusyBranch(null);
+    }
+  }
+
   return (
     <aside className="branch-sidebar">
       <div className="branch-sidebar-header">
@@ -79,9 +104,27 @@ function BranchSidebar({ repoPath, branches, onChanged, onError }: Props) {
               {b.name}
             </button>
             {!b.is_head && (
-              <button className="icon-button delete" onClick={() => handleDelete(b.name)} title="Eliminar rama">
-                ×
-              </button>
+              <span className="branch-actions">
+                <button
+                  className="icon-button"
+                  disabled={busyBranch !== null}
+                  onClick={() => handleMerge(b.name)}
+                  title={`Mezclar '${b.name}' en la rama actual`}
+                >
+                  ⇄
+                </button>
+                <button
+                  className="icon-button"
+                  disabled={busyBranch !== null}
+                  onClick={() => handleRebase(b.name)}
+                  title={`Rebasar la rama actual sobre '${b.name}'`}
+                >
+                  ⤴
+                </button>
+                <button className="icon-button delete" onClick={() => handleDelete(b.name)} title="Eliminar rama">
+                  ×
+                </button>
+              </span>
             )}
           </li>
         ))}
