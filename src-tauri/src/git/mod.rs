@@ -1,5 +1,6 @@
 pub mod branches;
 pub mod changes;
+pub mod remotes;
 pub mod repo;
 #[cfg(test)]
 mod test_support;

@@ -43,6 +43,14 @@ impl TestRepo {
     }
 }
 
+/// A bare repo on disk, usable as a local "remote" for push/fetch/pull tests
+/// without any network access or credentials.
+pub fn init_bare_remote() -> TempDir {
+    let dir = TempDir::new().unwrap();
+    Repository::init_bare(dir.path()).unwrap();
+    dir
+}
+
 /// Repo with a single commit ("initial.txt"), ready for status/branch experiments.
 pub fn init_repo_with_commit() -> TestRepo {
     let dir = TempDir::new().unwrap();

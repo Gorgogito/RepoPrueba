@@ -35,6 +35,41 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
+.remote-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+button.secondary {
+  background-color: transparent;
+  color: inherit;
+  border: 1px solid #d1d5db;
+}
+
+button.secondary:hover {
+  background-color: #eceef1;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.remote-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.remote-form input {
+  width: 260px;
+  padding: 0.4em 0.6em;
+  font-size: 0.85em;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+}
+
 .branch-sidebar {
   width: 220px;
   flex-shrink: 0;
@@ -324,6 +359,20 @@ li {
   }
 
   .commit-form textarea {
+    background: #1f2023;
+    color: #e5e7eb;
+    border-color: #4b4f56;
+  }
+
+  button.secondary {
+    border-color: #4b4f56;
+  }
+
+  button.secondary:hover {
+    background-color: #26282d;
+  }
+
+  .remote-form input {
     background: #1f2023;
     color: #e5e7eb;
     border-color: #4b4f56;

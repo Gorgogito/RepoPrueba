@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import BranchSidebar, { BranchInfo } from "./components/BranchSidebar";
 import CommitPanel, { RepoStatus } from "./components/CommitPanel";
+import RemoteControls, { RemoteInfo } from "./components/RemoteControls";
 import "./App.css";
 
 interface RepoInfo {
@@ -15,17 +16,20 @@ function App() {
   const [repo, setRepo] = useState<RepoInfo | null>(null);
   const [status, setStatus] = useState<RepoStatus | null>(null);
   const [branches, setBranches] = useState<BranchInfo[]>([]);
+  const [remotes, setRemotes] = useState<RemoteInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   async function loadRepoData(path: string) {
-    const [info, repoStatus, branchList] = await Promise.all([
+    const [info, repoStatus, branchList, remoteList] = await Promise.all([
       invoke<RepoInfo>("open_repository", { path }),
       invoke<RepoStatus>("get_repo_status", { path }),
       invoke<BranchInfo[]>("list_branches", { path }),
+      invoke<RemoteInfo[]>("list_remotes", { path }),
     ]);
     setRepo(info);
     setStatus(repoStatus);
     setBranches(branchList);
+    setRemotes(remoteList);
   }
 
   async function openRepository() {
@@ -39,6 +43,7 @@ function App() {
       setRepo(null);
       setStatus(null);
       setBranches([]);
+      setRemotes([]);
       setError(String(err));
     }
   }
@@ -66,6 +71,15 @@ function App() {
               </span>
             )}
           </div>
+        )}
+        {repo && (
+          <RemoteControls
+            repoPath={repo.path}
+            remotes={remotes}
+            currentBranch={repo.current_branch}
+            onChanged={refresh}
+            onError={setError}
+          />
         )}
       </header>
 
