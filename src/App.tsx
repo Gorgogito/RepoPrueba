@@ -7,6 +7,7 @@ import RemoteControls, { RemoteInfo } from "./components/RemoteControls";
 import StashPanel, { StashInfo } from "./components/StashPanel";
 import ConflictResolver, { OperationStatus } from "./components/ConflictResolver";
 import CommitGraph from "./components/CommitGraph";
+import RepoSwitcher from "./components/RepoSwitcher";
 import "./App.css";
 
 interface RepoInfo {
@@ -25,6 +26,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"changes" | "history">("changes");
   const [historyVersion, setHistoryVersion] = useState(0);
+  const [reposVersion, setReposVersion] = useState(0);
 
   async function loadRepoData(path: string) {
     const [info, repoStatus, branchList, remoteList, stashList, operationStatus] = await Promise.all([
@@ -43,15 +45,14 @@ function App() {
     setOperation(operationStatus.kind === "none" ? null : operationStatus);
   }
 
-  async function openRepository() {
+  async function openRepositoryAtPath(path: string) {
     setError(null);
-    const selected = await open({ directory: true, multiple: false });
-    if (!selected || Array.isArray(selected)) return;
-
     try {
-      await loadRepoData(selected);
+      await loadRepoData(path);
       setHistoryVersion((v) => v + 1);
       setTab("changes");
+      await invoke("add_known_repo", { path });
+      setReposVersion((v) => v + 1);
     } catch (err) {
       setRepo(null);
       setStatus(null);
@@ -61,6 +62,12 @@ function App() {
       setOperation(null);
       setError(String(err));
     }
+  }
+
+  async function openRepository() {
+    const selected = await open({ directory: true, multiple: false });
+    if (!selected || Array.isArray(selected)) return;
+    await openRepositoryAtPath(selected as string);
   }
 
   async function refresh() {
@@ -73,10 +80,17 @@ function App() {
     }
   }
 
+
   return (
     <div className="app-shell">
       <header className="toolbar">
-        <button onClick={openRepository}>Abrir repositorio</button>
+        <RepoSwitcher
+          currentName={repo?.name ?? null}
+          reposVersion={reposVersion}
+          onSwitchRepo={openRepositoryAtPath}
+          onBrowse={openRepository}
+          onError={setError}
+        />
         {repo && (
           <div className="repo-summary">
             <strong>{repo.name}</strong>

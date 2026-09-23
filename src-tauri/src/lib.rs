@@ -1,4 +1,5 @@
 mod git;
+mod workspace;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -35,7 +36,10 @@ pub fn run() {
             git::conflicts::resolve_conflict,
             git::conflicts::continue_operation,
             git::conflicts::abort_operation,
-            git::log::get_commit_log
+            git::log::get_commit_log,
+            workspace::list_known_repos,
+            workspace::add_known_repo,
+            workspace::remove_known_repo
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
