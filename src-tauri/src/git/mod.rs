@@ -3,6 +3,7 @@ pub mod changes;
 pub mod conflicts;
 pub mod diff;
 pub mod history_ops;
+pub mod interactive_rebase;
 pub mod log;
 pub mod remotes;
 pub mod repo;

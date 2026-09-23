@@ -32,6 +32,8 @@ pub fn run() {
             git::history_ops::cherry_pick,
             git::history_ops::revert_commit,
             git::history_ops::rebase_branch,
+            git::interactive_rebase::get_rebase_commits,
+            git::interactive_rebase::start_interactive_rebase,
             git::stash::stash_save,
             git::stash::stash_list,
             git::stash::stash_apply,

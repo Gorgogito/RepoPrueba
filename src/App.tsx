@@ -14,6 +14,7 @@ import UndoRedoControls from "./components/UndoRedoControls";
 import TerminalPanel from "./components/TerminalPanel";
 import CloneModal from "./components/CloneModal";
 import PullRequestsPanel from "./components/PullRequestsPanel";
+import InteractiveRebaseModal from "./components/InteractiveRebaseModal";
 import "./App.css";
 
 interface RepoInfo {
@@ -38,6 +39,7 @@ function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [cloneModalOpen, setCloneModalOpen] = useState(false);
+  const [rebasePlan, setRebasePlan] = useState<{ onto: string; label: string } | null>(null);
 
   useEffect(() => {
     invoke<RepoEntry[]>("list_known_repos")
@@ -286,7 +288,13 @@ function App() {
       <div className="app-body">
         {repo && (
           <>
-            <BranchSidebar repoPath={repo.path} branches={branches} onChanged={refresh} onError={setError} />
+            <BranchSidebar
+              repoPath={repo.path}
+              branches={branches}
+              onChanged={refresh}
+              onError={setError}
+              onInteractiveRebase={(onto, label) => setRebasePlan({ onto, label })}
+            />
             <StashPanel
               repoPath={repo.path}
               stashes={stashes}
@@ -342,6 +350,7 @@ function App() {
                   onChanged={refresh}
                   onError={setError}
                   onViewDiff={(sha, label) => setDiffRequest({ kind: "commit", sha, label })}
+                  onInteractiveRebase={(onto, label) => setRebasePlan({ onto, label })}
                 />
               ) : (
                 <PullRequestsPanel
@@ -379,6 +388,20 @@ function App() {
       {paletteOpen && <CommandPalette commands={commands} onClose={() => setPaletteOpen(false)} />}
 
       {cloneModalOpen && <CloneModal onClose={() => setCloneModalOpen(false)} onCloned={handleCloned} />}
+
+      {repo && rebasePlan && (
+        <InteractiveRebaseModal
+          repoPath={repo.path}
+          onto={rebasePlan.onto}
+          ontoLabel={rebasePlan.label}
+          onClose={() => setRebasePlan(null)}
+          onStarted={() => {
+            setRebasePlan(null);
+            refresh();
+          }}
+          onError={setError}
+        />
+      )}
     </div>
   );
 }

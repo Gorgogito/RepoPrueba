@@ -6,6 +6,7 @@ export interface OperationStatus {
   kind: string;
   message: string;
   conflicts: string[];
+  paused_reason: string | null;
 }
 
 interface Props {
@@ -100,6 +101,11 @@ function ConflictResolver({ repoPath, operation, onChanged, onError }: Props) {
         <div>
           <h2>{KIND_LABELS[operation.kind] ?? "Operación en curso"}</h2>
           {operation.message && <p className="conflict-message">{operation.message.split("\n")[0]}</p>}
+          {operation.paused_reason === "edit" && (
+            <p className="conflict-message">
+              Editando este commit: modificá lo que necesites en la pestaña Cambios y tocá Continuar.
+            </p>
+          )}
         </div>
         <div className="conflict-actions">
           <button className="secondary" onClick={handleAbort} disabled={busy}>

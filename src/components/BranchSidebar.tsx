@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { IconMerge, IconRebase, IconClose, IconDot } from "./icons";
+import { IconMerge, IconRebase, IconRebaseInteractive, IconClose, IconDot } from "./icons";
 
 export interface BranchInfo {
   name: string;
@@ -13,9 +13,10 @@ interface Props {
   branches: BranchInfo[];
   onChanged: () => void;
   onError: (message: string) => void;
+  onInteractiveRebase: (onto: string, ontoLabel: string) => void;
 }
 
-function BranchSidebar({ repoPath, branches, onChanged, onError }: Props) {
+function BranchSidebar({ repoPath, branches, onChanged, onError, onInteractiveRebase }: Props) {
   const [newBranchName, setNewBranchName] = useState("");
   const [creating, setCreating] = useState(false);
   const [busyBranch, setBusyBranch] = useState<string | null>(null);
@@ -125,6 +126,15 @@ function BranchSidebar({ repoPath, branches, onChanged, onError }: Props) {
                   aria-label={`Rebasar la rama actual sobre '${b.name}'`}
                 >
                   <IconRebase />
+                </button>
+                <button
+                  className="icon-button"
+                  disabled={busyBranch !== null}
+                  onClick={() => onInteractiveRebase(b.name, b.name)}
+                  title={`Rebase interactivo sobre '${b.name}'`}
+                  aria-label={`Rebase interactivo sobre '${b.name}'`}
+                >
+                  <IconRebaseInteractive />
                 </button>
                 <button
                   className="icon-button delete"

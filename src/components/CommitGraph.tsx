@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { IconCherryPick, IconRevert } from "./icons";
+import { IconCherryPick, IconRevert, IconRebaseInteractive } from "./icons";
 
 export interface CommitInfo {
   sha: string;
@@ -99,9 +99,10 @@ interface Props {
   onChanged: () => void;
   onError: (message: string) => void;
   onViewDiff: (sha: string, label: string) => void;
+  onInteractiveRebase: (onto: string, ontoLabel: string) => void;
 }
 
-function CommitGraph({ repoPath, refreshToken, onChanged, onError, onViewDiff }: Props) {
+function CommitGraph({ repoPath, refreshToken, onChanged, onError, onViewDiff, onInteractiveRebase }: Props) {
   const [commits, setCommits] = useState<CommitInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [busySha, setBusySha] = useState<string | null>(null);
@@ -198,6 +199,20 @@ function CommitGraph({ repoPath, refreshToken, onChanged, onError, onViewDiff }:
                 aria-label="Revertir este commit"
               >
                 <IconRevert />
+              </button>
+              <button
+                className="icon-button"
+                disabled={busySha !== null || row.parents.length === 0}
+                onClick={() =>
+                  onInteractiveRebase(
+                    row.parents[0],
+                    rows.find((r) => r.sha === row.parents[0])?.short_sha ?? row.parents[0].slice(0, 7)
+                  )
+                }
+                title="Rebase interactivo desde aquí"
+                aria-label="Rebase interactivo desde aquí"
+              >
+                <IconRebaseInteractive />
               </button>
             </span>
           </div>

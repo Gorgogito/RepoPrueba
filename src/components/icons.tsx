@@ -36,6 +36,19 @@ export function IconRebase(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function IconRebaseInteractive(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="3.5" cy="4" r="1.2" fill="currentColor" stroke="none" />
+      <path d="M6.5 4H13" />
+      <circle cx="3.5" cy="8" r="1.2" fill="currentColor" stroke="none" />
+      <path d="M6.5 8H13" />
+      <circle cx="3.5" cy="12" r="1.2" fill="currentColor" stroke="none" />
+      <path d="M6.5 12H13" />
+    </svg>
+  );
+}
+
 export function IconClose(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...base(props)}>

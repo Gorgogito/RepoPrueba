@@ -16,17 +16,13 @@ fn operation_kind(state: RepositoryState) -> &'static str {
 
 #[derive(Serialize)]
 pub struct OperationStatus {
-    kind: String,
-    message: String,
-    conflicts: Vec<String>,
+    pub(crate) kind: String,
+    pub(crate) message: String,
+    pub(crate) conflicts: Vec<String>,
+    pub(crate) paused_reason: Option<String>,
 }
 
-#[tauri::command]
-pub fn get_operation_status(path: String) -> Result<OperationStatus, String> {
-    let repo = Repository::open(&path).map_err(err_msg)?;
-    let kind = operation_kind(repo.state()).to_string();
-    let message = repo.message().unwrap_or_default();
-
+fn collect_conflicts(repo: &Repository) -> Result<Vec<String>, String> {
     let index = repo.index().map_err(err_msg)?;
     let mut conflicts = Vec::new();
     if index.has_conflicts() {
@@ -46,8 +42,29 @@ pub fn get_operation_status(path: String) -> Result<OperationStatus, String> {
             }
         }
     }
+    Ok(conflicts)
+}
 
-    Ok(OperationStatus { kind, message, conflicts })
+#[tauri::command]
+pub fn get_operation_status(path: String) -> Result<OperationStatus, String> {
+    let repo = Repository::open(&path).map_err(err_msg)?;
+    let conflicts = collect_conflicts(&repo)?;
+
+    // Our interactive rebase engine (git/interactive_rebase.rs) never uses
+    // git2's own RebaseMerge state, so it has to be checked separately —
+    // it takes priority since repo.state() reports "Clean" while paused.
+    if let Some(reason) = super::interactive_rebase::paused_reason(&repo) {
+        return Ok(OperationStatus {
+            kind: "rebase".to_string(),
+            message: String::new(),
+            conflicts,
+            paused_reason: Some(reason),
+        });
+    }
+
+    let kind = operation_kind(repo.state()).to_string();
+    let message = repo.message().unwrap_or_default();
+    Ok(OperationStatus { kind, message, conflicts, paused_reason: None })
 }
 
 #[derive(Serialize)]
@@ -99,6 +116,11 @@ pub fn resolve_conflict(path: String, file: String, content: String) -> Result<(
 #[tauri::command]
 pub fn continue_operation(path: String) -> Result<(), String> {
     let mut repo = Repository::open(&path).map_err(err_msg)?;
+
+    if super::interactive_rebase::paused_reason(&repo).is_some() {
+        return super::interactive_rebase::continue_after_resolution(&repo);
+    }
+
     let mut index = repo.index().map_err(err_msg)?;
     if index.has_conflicts() {
         return Err("Todavía hay conflictos sin resolver".to_string());
@@ -170,6 +192,11 @@ pub fn continue_operation(path: String) -> Result<(), String> {
 #[tauri::command]
 pub fn abort_operation(path: String) -> Result<(), String> {
     let repo = Repository::open(&path).map_err(err_msg)?;
+
+    if super::interactive_rebase::paused_reason(&repo).is_some() {
+        return super::interactive_rebase::abort(&repo);
+    }
+
     let head_commit = repo.head().map_err(err_msg)?.peel_to_commit().map_err(err_msg)?;
 
     let mut checkout = git2::build::CheckoutBuilder::new();
