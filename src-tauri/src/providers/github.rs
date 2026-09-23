@@ -1,39 +1,29 @@
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use super::{ConnectedUser, PullRequestDetail, PullRequestSummary};
+use serde::{de::DeserializeOwned, Deserialize};
+
+pub const API_BASE: &str = "https://api.github.com";
 
 const USER_AGENT: &str = "Stash-Git-Client";
 
-#[derive(Serialize, Clone, Debug)]
-pub struct GithubUser {
-    pub login: String,
-    pub avatar_url: String,
-}
+/// Extracts `(owner, repo)` from a GitHub remote URL, supporting the forms
+/// git actually produces: `https://github.com/owner/repo.git`,
+/// `git@github.com:owner/repo.git`, and `ssh://git@github.com/owner/repo`.
+pub fn parse_remote(url: &str) -> Option<(String, String)> {
+    let trimmed = url.trim().trim_end_matches('/').trim_end_matches(".git");
 
-#[derive(Serialize, Clone, Debug)]
-pub struct PullRequestSummary {
-    pub number: u64,
-    pub title: String,
-    pub author: String,
-    pub state: String,
-    pub draft: bool,
-    pub base: String,
-    pub head: String,
-    pub html_url: String,
-    pub created_at: String,
-    pub updated_at: String,
-}
+    let after_host = trimmed
+        .strip_prefix("git@github.com:")
+        .or_else(|| trimmed.strip_prefix("ssh://git@github.com/"))
+        .or_else(|| trimmed.strip_prefix("https://github.com/"))
+        .or_else(|| trimmed.strip_prefix("http://github.com/"))?;
 
-#[derive(Serialize, Clone, Debug)]
-pub struct PullRequestDetail {
-    #[serde(flatten)]
-    pub summary: PullRequestSummary,
-    pub body: String,
-    pub merged: bool,
-    pub mergeable: Option<bool>,
-    pub mergeable_state: String,
-    pub additions: i64,
-    pub deletions: i64,
-    pub changed_files: i64,
-    pub commits: i64,
+    let mut parts = after_host.splitn(2, '/');
+    let owner = parts.next()?;
+    let repo = parts.next()?;
+    if owner.is_empty() || repo.is_empty() {
+        return None;
+    }
+    Some((owner.to_string(), repo.to_string()))
 }
 
 #[derive(Deserialize)]
@@ -127,14 +117,14 @@ async fn handle_response<T: DeserializeOwned>(resp: reqwest::Response) -> Result
     }
 }
 
-pub async fn fetch_user(base_url: &str, token: &str) -> Result<GithubUser, String> {
+pub async fn fetch_user(base_url: &str, token: &str) -> Result<ConnectedUser, String> {
     let client = reqwest::Client::new();
     let resp = auth(client.get(format!("{base_url}/user")), token)
         .send()
         .await
         .map_err(|e| e.to_string())?;
     let raw: RawUser = handle_response(resp).await?;
-    Ok(GithubUser { login: raw.login, avatar_url: raw.avatar_url })
+    Ok(ConnectedUser { login: raw.login, avatar_url: raw.avatar_url })
 }
 
 pub async fn list_pull_requests(
@@ -263,6 +253,25 @@ mod tests {
         })
     }
 
+    #[test]
+    fn recognizes_common_github_remote_forms() {
+        assert_eq!(parse_remote("https://github.com/facebook/react.git"), Some(("facebook".to_string(), "react".to_string())));
+        assert_eq!(parse_remote("https://github.com/facebook/react"), Some(("facebook".to_string(), "react".to_string())));
+        assert_eq!(parse_remote("git@github.com:facebook/react.git"), Some(("facebook".to_string(), "react".to_string())));
+        assert_eq!(
+            parse_remote("ssh://git@github.com/facebook/react.git"),
+            Some(("facebook".to_string(), "react".to_string()))
+        );
+        assert_eq!(parse_remote("https://github.com/facebook/react/"), Some(("facebook".to_string(), "react".to_string())));
+    }
+
+    #[test]
+    fn rejects_non_github_or_malformed_urls() {
+        assert_eq!(parse_remote("https://bitbucket.org/owner/repo.git"), None);
+        assert_eq!(parse_remote("C:\\repos\\local-repo"), None);
+        assert_eq!(parse_remote("https://github.com/only-owner"), None);
+    }
+
     #[tokio::test]
     async fn fetch_user_parses_login_and_avatar() {
         let mut server = mockito::Server::new_async().await;
@@ -345,19 +354,9 @@ mod tests {
             .create_async()
             .await;
 
-        let pr = create_pull_request(
-            &server.url(),
-            "tok",
-            "octocat",
-            "hello",
-            "Add feature",
-            "Description here",
-            "feature-x",
-            "main",
-            false,
-        )
-        .await
-        .unwrap();
+        let pr = create_pull_request(&server.url(), "tok", "octocat", "hello", "Add feature", "Description here", "feature-x", "main", false)
+            .await
+            .unwrap();
 
         assert_eq!(pr.summary.number, 7);
         mock.assert_async().await;

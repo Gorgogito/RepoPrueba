@@ -260,7 +260,12 @@
 
 .commit-list {
   flex: 1;
-  min-width: 0;
+  /* Matches the fixed-width columns (author/date/sha/actions) plus gaps,
+     leaving ~200px for the message column. Without a floor here, flex
+     would rather shrink this to nothing than let the graph's SVG (which
+     never shrinks) push the row past the container and trigger the
+     horizontal scrollbar .commit-graph already has. */
+  min-width: 680px;
 }
 
 .commit-row {

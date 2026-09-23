@@ -26,7 +26,7 @@ function CreatePullRequestModal({ repoPath, branchNames, currentBranch, onClose,
     setCreating(true);
     setError(null);
     try {
-      const pr = await invoke<PullRequestDetail>("github_create_pull_request", {
+      const pr = await invoke<PullRequestDetail>("provider_create_pull_request", {
         path: repoPath,
         title: title.trim(),
         body,

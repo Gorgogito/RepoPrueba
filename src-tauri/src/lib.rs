@@ -1,5 +1,5 @@
 mod git;
-mod github;
+mod providers;
 mod terminal;
 mod workspace;
 
@@ -59,13 +59,13 @@ pub fn run() {
             terminal::terminal_write,
             terminal::terminal_resize,
             terminal::terminal_stop,
-            github::github_status,
-            github::github_connect,
-            github::github_disconnect,
-            github::github_list_pull_requests,
-            github::github_get_pull_request,
-            github::github_create_pull_request,
-            github::github_merge_pull_request,
+            providers::provider_status,
+            providers::provider_connect,
+            providers::provider_disconnect,
+            providers::provider_list_pull_requests,
+            providers::provider_get_pull_request,
+            providers::provider_create_pull_request,
+            providers::provider_merge_pull_request,
             git::worktrees::list_worktrees,
             git::worktrees::add_worktree,
             git::worktrees::remove_worktree,

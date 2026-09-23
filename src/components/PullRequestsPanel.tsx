@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import GithubConnectModal from "./GithubConnectModal";
+import ProviderConnectModal from "./ProviderConnectModal";
 import CreatePullRequestModal from "./CreatePullRequestModal";
 import { IconClose } from "./icons";
 
@@ -29,7 +29,9 @@ export interface PullRequestDetail extends PullRequestSummary {
   commits: number;
 }
 
-interface GithubRepoStatus {
+interface ProviderStatus {
+  provider: "github" | "bitbucket" | null;
+  provider_label: string | null;
   has_token: boolean;
   owner: string | null;
   repo: string | null;
@@ -46,7 +48,7 @@ interface Props {
 type StateFilter = "open" | "closed" | "all";
 
 function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken, onError }: Props) {
-  const [status, setStatus] = useState<GithubRepoStatus | null>(null);
+  const [status, setStatus] = useState<ProviderStatus | null>(null);
   const [stateFilter, setStateFilter] = useState<StateFilter>("open");
   const [prs, setPrs] = useState<PullRequestSummary[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,7 +60,7 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
 
   async function loadStatus() {
     try {
-      const s = await invoke<GithubRepoStatus>("github_status", { path: repoPath });
+      const s = await invoke<ProviderStatus>("provider_status", { path: repoPath });
       setStatus(s);
       return s;
     } catch (err) {
@@ -70,7 +72,7 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
   async function loadPulls(state: StateFilter) {
     setLoading(true);
     try {
-      const list = await invoke<PullRequestSummary[]>("github_list_pull_requests", { path: repoPath, state });
+      const list = await invoke<PullRequestSummary[]>("provider_list_pull_requests", { path: repoPath, state });
       setPrs(list);
     } catch (err) {
       onError(String(err));
@@ -94,7 +96,7 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
 
   async function openDetail(number: number) {
     try {
-      const detail = await invoke<PullRequestDetail>("github_get_pull_request", { path: repoPath, number });
+      const detail = await invoke<PullRequestDetail>("provider_get_pull_request", { path: repoPath, number });
       setSelected(detail);
       setMergeMethod("merge");
     } catch (err) {
@@ -106,7 +108,7 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
     if (!selected) return;
     setMerging(true);
     try {
-      await invoke("github_merge_pull_request", { path: repoPath, number: selected.number, method: mergeMethod });
+      await invoke("provider_merge_pull_request", { path: repoPath, number: selected.number, method: mergeMethod });
       setSelected(null);
       await loadPulls(stateFilter);
     } catch (err) {
@@ -117,16 +119,26 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
   }
 
   if (!status) {
-    return <p className="hint">Cargando estado de GitHub...</p>;
+    return <p className="hint">Cargando estado del proveedor remoto...</p>;
+  }
+
+  if (!status.provider) {
+    return (
+      <p className="hint">
+        El remoto 'origin' de este repositorio no es de un proveedor soportado todavía (GitHub o Bitbucket).
+      </p>
+    );
   }
 
   if (!status.has_token) {
     return (
       <div className="pr-empty-state">
-        <p className="hint">Conectá tu cuenta de GitHub para ver, crear y fusionar Pull Requests.</p>
-        <button onClick={() => setConnectOpen(true)}>Conectar GitHub</button>
+        <p className="hint">Conectá tu cuenta de {status.provider_label} para ver, crear y fusionar Pull Requests.</p>
+        <button onClick={() => setConnectOpen(true)}>Conectar {status.provider_label}</button>
         {connectOpen && (
-          <GithubConnectModal
+          <ProviderConnectModal
+            provider={status.provider}
+            providerLabel={status.provider_label ?? ""}
             onClose={() => setConnectOpen(false)}
             onConnected={() => {
               setConnectOpen(false);
@@ -138,10 +150,6 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
         )}
       </div>
     );
-  }
-
-  if (!status.owner) {
-    return <p className="hint">El remoto 'origin' de este repositorio no es un repositorio de GitHub.</p>;
   }
 
   return (
@@ -212,14 +220,20 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
 
             <div className="diff-modal-body pr-detail-body">
               <p className="pr-detail-meta">
-                {selected.author} · {selected.head} → {selected.base} · +{selected.additions} -{selected.deletions} ·{" "}
-                {selected.changed_files} archivos · {selected.commits} commits
+                {selected.author} · {selected.head} → {selected.base}
+                {status.provider === "github" && (
+                  <>
+                    {" "}
+                    · +{selected.additions} -{selected.deletions} · {selected.changed_files} archivos ·{" "}
+                    {selected.commits} commits
+                  </>
+                )}
               </p>
 
               {selected.body && <p className="pr-detail-description">{selected.body}</p>}
 
               <button className="link-button" onClick={() => openUrl(selected.html_url)}>
-                Ver en GitHub
+                Ver en {status.provider_label}
               </button>
 
               {selected.merged ? (
@@ -231,7 +245,9 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
                   <select value={mergeMethod} onChange={(e) => setMergeMethod(e.currentTarget.value)} disabled={merging}>
                     <option value="merge">Merge commit</option>
                     <option value="squash">Squash and merge</option>
-                    <option value="rebase">Rebase and merge</option>
+                    <option value="rebase">
+                      {status.provider === "bitbucket" ? "Fast-forward merge" : "Rebase and merge"}
+                    </option>
                   </select>
                   <button onClick={handleMerge} disabled={merging || selected.mergeable === false}>
                     {merging ? "Fusionando..." : "Fusionar"}
