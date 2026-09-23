@@ -1,7 +1,6 @@
-use super::err_msg;
+use super::{err_msg, run_git};
 use git2::Repository;
 use serde::Serialize;
-use std::process::Command;
 
 #[derive(Serialize)]
 pub struct RemoteInfo {
@@ -32,30 +31,6 @@ pub fn add_remote(path: String, name: String, url: String) -> Result<(), String>
     let repo = Repository::open(&path).map_err(err_msg)?;
     repo.remote(&name, &url).map_err(err_msg)?;
     Ok(())
-}
-
-/// Network operations (fetch/pull/push) shell out to the system `git`
-/// instead of driving libgit2's transport directly. This means credential
-/// helpers (Git Credential Manager's GitHub/OAuth login on Windows), SSH
-/// agents, proxies and .netrc all just work exactly as they do from a
-/// terminal, with no need to vendor OpenSSL/libssh2 into this binary.
-fn run_git(path: &str, args: &[&str]) -> Result<String, String> {
-    let output = Command::new("git")
-        .args(args)
-        .current_dir(path)
-        .output()
-        .map_err(|e| format!("No se pudo ejecutar git: {e}"))?;
-
-    if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        Err(if stderr.is_empty() {
-            format!("git {} falló", args.join(" "))
-        } else {
-            stderr
-        })
-    }
 }
 
 #[tauri::command]

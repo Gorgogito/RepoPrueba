@@ -1144,6 +1144,76 @@ li .icon-button {
   background: #ffffff;
 }
 
+.tools-modal {
+  width: min(680px, 92vw);
+}
+
+.tools-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tools-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.tools-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  flex-wrap: wrap;
+  padding: 0.4em;
+  border-radius: 6px;
+}
+
+.tools-list-row:hover {
+  background: #eceef1;
+}
+
+.tools-list-main {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  flex-shrink: 0;
+}
+
+.tools-list-path {
+  flex: 1;
+  min-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "SF Mono", Consolas, monospace;
+  font-size: 0.8em;
+  color: #6b7280;
+}
+
+.tools-list-actions {
+  display: flex;
+  gap: 0.4em;
+  flex-shrink: 0;
+}
+
+.tools-bulk-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tools-add-form {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+.tools-track-form {
+  margin-top: 0.5em;
+}
+
 .status-tag.modified { color: #d97706; }
 .status-tag.added { color: #16a34a; }
 .status-tag.deleted { color: #dc2626; }
@@ -1345,6 +1415,18 @@ li .icon-button {
     background: #1f2023;
     color: #e5e7eb;
     border-color: #4b4f56;
+  }
+
+  .tools-list-row:hover {
+    background: #26282d;
+  }
+
+  .tools-list-path {
+    color: #9ca3af;
+  }
+
+  .tools-add-form {
+    border-color: #33353a;
   }
 
   .rebase-plan-row:hover {

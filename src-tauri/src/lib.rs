@@ -65,7 +65,24 @@ pub fn run() {
             github::github_list_pull_requests,
             github::github_get_pull_request,
             github::github_create_pull_request,
-            github::github_merge_pull_request
+            github::github_merge_pull_request,
+            git::worktrees::list_worktrees,
+            git::worktrees::add_worktree,
+            git::worktrees::remove_worktree,
+            git::worktrees::prune_worktrees,
+            git::worktrees::lock_worktree,
+            git::worktrees::unlock_worktree,
+            git::submodules::list_submodules,
+            git::submodules::add_submodule,
+            git::submodules::update_submodules,
+            git::submodules::sync_submodules,
+            git::submodules::deinit_submodule,
+            git::lfs::get_lfs_status,
+            git::lfs::lfs_track,
+            git::lfs::lfs_untrack,
+            git::lfs::lfs_install,
+            git::lfs::lfs_pull,
+            git::lfs::lfs_list_files
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

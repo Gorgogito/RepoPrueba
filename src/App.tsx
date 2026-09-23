@@ -15,6 +15,10 @@ import TerminalPanel from "./components/TerminalPanel";
 import CloneModal from "./components/CloneModal";
 import PullRequestsPanel from "./components/PullRequestsPanel";
 import InteractiveRebaseModal from "./components/InteractiveRebaseModal";
+import ToolsMenu from "./components/ToolsMenu";
+import WorktreesModal from "./components/WorktreesModal";
+import SubmodulesModal from "./components/SubmodulesModal";
+import LfsModal from "./components/LfsModal";
 import "./App.css";
 
 interface RepoInfo {
@@ -40,6 +44,9 @@ function App() {
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [cloneModalOpen, setCloneModalOpen] = useState(false);
   const [rebasePlan, setRebasePlan] = useState<{ onto: string; label: string } | null>(null);
+  const [worktreesOpen, setWorktreesOpen] = useState(false);
+  const [submodulesOpen, setSubmodulesOpen] = useState(false);
+  const [lfsOpen, setLfsOpen] = useState(false);
 
   useEffect(() => {
     invoke<RepoEntry[]>("list_known_repos")
@@ -275,6 +282,13 @@ function App() {
           />
         )}
         {repo && (
+          <ToolsMenu
+            onWorktrees={() => setWorktreesOpen(true)}
+            onSubmodules={() => setSubmodulesOpen(true)}
+            onLfs={() => setLfsOpen(true)}
+          />
+        )}
+        {repo && (
           <button
             className={`secondary terminal-trigger ${terminalOpen ? "active" : ""}`}
             onClick={() => setTerminalOpen((v) => !v)}
@@ -402,6 +416,16 @@ function App() {
           onError={setError}
         />
       )}
+
+      {repo && worktreesOpen && (
+        <WorktreesModal repoPath={repo.path} onClose={() => setWorktreesOpen(false)} onError={setError} />
+      )}
+
+      {repo && submodulesOpen && (
+        <SubmodulesModal repoPath={repo.path} onClose={() => setSubmodulesOpen(false)} onError={setError} />
+      )}
+
+      {repo && lfsOpen && <LfsModal repoPath={repo.path} onClose={() => setLfsOpen(false)} onError={setError} />}
     </div>
   );
 }
