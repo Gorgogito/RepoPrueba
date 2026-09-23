@@ -279,6 +279,9 @@ button:disabled {
 }
 
 .icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   color: inherit;
   border: 1px solid #d1d5db;
@@ -288,6 +291,16 @@ button:disabled {
   line-height: 1;
   padding: 0;
   font-size: 1em;
+}
+
+.icon-button svg {
+  display: block;
+}
+
+.current-dot {
+  color: #396cd8;
+  margin-right: 0.3em;
+  flex-shrink: 0;
 }
 
 .branch-actions {
@@ -340,6 +353,8 @@ button:disabled {
 }
 
 .branch-name {
+  display: flex;
+  align-items: center;
   flex: 1;
   text-align: left;
   background: transparent;
@@ -474,6 +489,11 @@ button:hover {
 .conflict-file-list .branch-name {
   font-size: 0.85em;
   color: #b45309;
+  gap: 0.4em;
+}
+
+.conflict-warning-icon {
+  flex-shrink: 0;
 }
 
 .conflict-editor {

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { IconCherryPick, IconRevert } from "./icons";
 
 export interface CommitInfo {
   sha: string;
@@ -185,16 +186,18 @@ function CommitGraph({ repoPath, refreshToken, onChanged, onError, onViewDiff }:
                 disabled={busySha !== null}
                 onClick={() => runAction("cherry_pick", row.sha)}
                 title="Cherry-pick este commit sobre la rama actual"
+                aria-label="Cherry-pick este commit sobre la rama actual"
               >
-                ⧉
+                <IconCherryPick />
               </button>
               <button
                 className="icon-button"
                 disabled={busySha !== null}
                 onClick={() => runAction("revert_commit", row.sha)}
                 title="Revertir este commit"
+                aria-label="Revertir este commit"
               >
-                ↺
+                <IconRevert />
               </button>
             </span>
           </div>

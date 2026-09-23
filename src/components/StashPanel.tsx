@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { IconStashPop, IconStashApply, IconClose } from "./icons";
 
 export interface StashInfo {
   index: number;
@@ -69,14 +70,29 @@ function StashPanel({ repoPath, stashes, canStash, onChanged, onError }: Props) 
                 {s.message}
               </span>
               <span className="branch-actions">
-                <button className="icon-button" onClick={() => run("stash_pop", s.index)} title="Aplicar y quitar">
-                  ↩
+                <button
+                  className="icon-button"
+                  onClick={() => run("stash_pop", s.index)}
+                  title="Aplicar y quitar"
+                  aria-label="Aplicar y quitar"
+                >
+                  <IconStashPop />
                 </button>
-                <button className="icon-button" onClick={() => run("stash_apply", s.index)} title="Aplicar (mantener)">
-                  ⇩
+                <button
+                  className="icon-button"
+                  onClick={() => run("stash_apply", s.index)}
+                  title="Aplicar (mantener)"
+                  aria-label="Aplicar (mantener)"
+                >
+                  <IconStashApply />
                 </button>
-                <button className="icon-button delete" onClick={() => run("stash_drop", s.index)} title="Eliminar">
-                  ×
+                <button
+                  className="icon-button delete"
+                  onClick={() => run("stash_drop", s.index)}
+                  title="Eliminar"
+                  aria-label="Eliminar"
+                >
+                  <IconClose />
                 </button>
               </span>
             </li>

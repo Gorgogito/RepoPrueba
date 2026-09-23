@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { IconMerge, IconRebase, IconClose, IconDot } from "./icons";
 
 export interface BranchInfo {
   name: string;
@@ -102,7 +103,7 @@ function BranchSidebar({ repoPath, branches, onChanged, onError }: Props) {
         {branches.map((b) => (
           <li key={b.name} className={b.is_head ? "current" : ""}>
             <button className="branch-name" onClick={() => handleSwitch(b.name)} disabled={b.is_head}>
-              {b.is_head ? "● " : ""}
+              {b.is_head && <IconDot className="current-dot" />}
               {b.name}
             </button>
             {!b.is_head && (
@@ -112,19 +113,26 @@ function BranchSidebar({ repoPath, branches, onChanged, onError }: Props) {
                   disabled={busyBranch !== null}
                   onClick={() => handleMerge(b.name)}
                   title={`Mezclar '${b.name}' en la rama actual`}
+                  aria-label={`Mezclar '${b.name}' en la rama actual`}
                 >
-                  ⇄
+                  <IconMerge />
                 </button>
                 <button
                   className="icon-button"
                   disabled={busyBranch !== null}
                   onClick={() => handleRebase(b.name)}
                   title={`Rebasar la rama actual sobre '${b.name}'`}
+                  aria-label={`Rebasar la rama actual sobre '${b.name}'`}
                 >
-                  ⤴
+                  <IconRebase />
                 </button>
-                <button className="icon-button delete" onClick={() => handleDelete(b.name)} title="Eliminar rama">
-                  ×
+                <button
+                  className="icon-button delete"
+                  onClick={() => handleDelete(b.name)}
+                  title="Eliminar rama"
+                  aria-label="Eliminar rama"
+                >
+                  <IconClose />
                 </button>
               </span>
             )}

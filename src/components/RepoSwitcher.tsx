@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { IconChevronDown, IconClose } from "./icons";
 
 export interface RepoEntry {
   path: string;
@@ -49,7 +50,7 @@ function RepoSwitcher({ currentName, reposVersion, onSwitchRepo, onBrowse, onErr
   return (
     <div className="repo-switcher" ref={containerRef}>
       <button className="secondary repo-switcher-trigger" onClick={() => setOpen((v) => !v)}>
-        {currentName ?? "Abrir repositorio"} <span className="chevron">▾</span>
+        {currentName ?? "Abrir repositorio"} <IconChevronDown className="chevron" />
       </button>
 
       {open && (
@@ -68,8 +69,13 @@ function RepoSwitcher({ currentName, reposVersion, onSwitchRepo, onBrowse, onErr
                 >
                   {r.name}
                 </button>
-                <button className="icon-button delete" onClick={(e) => forget(r.path, e)} title="Quitar de la lista">
-                  ×
+                <button
+                  className="icon-button delete"
+                  onClick={(e) => forget(r.path, e)}
+                  title="Quitar de la lista"
+                  aria-label="Quitar de la lista"
+                >
+                  <IconClose />
                 </button>
               </li>
             ))}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { IconWarning } from "./icons";
 
 export interface OperationStatus {
   kind: string;
@@ -115,7 +116,8 @@ function ConflictResolver({ repoPath, operation, onChanged, onError }: Props) {
           {operation.conflicts.map((file) => (
             <li key={file} className={file === selected ? "current" : ""}>
               <button className="branch-name" onClick={() => openFile(file)}>
-                ⚠ {file}
+                <IconWarning className="conflict-warning-icon" />
+                {file}
               </button>
             </li>
           ))}

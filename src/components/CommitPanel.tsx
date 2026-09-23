@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { IconDiff } from "./icons";
 
 export interface FileChange {
   path: string;
@@ -97,8 +98,13 @@ function CommitPanel({ repoPath, status, onChanged, onError, onViewDiff }: Props
                     <button className="file-row" onClick={() => toggleStage(c)}>
                       <span className={`status-tag ${c.status}`}>{c.status}</span> {c.path}
                     </button>
-                    <button className="icon-button" onClick={() => onViewDiff(c.path, true)} title="Ver diff">
-                      ⊞
+                    <button
+                      className="icon-button"
+                      onClick={() => onViewDiff(c.path, true)}
+                      title="Ver diff"
+                      aria-label="Ver diff"
+                    >
+                      <IconDiff />
                     </button>
                   </li>
                 ))}
@@ -119,8 +125,13 @@ function CommitPanel({ repoPath, status, onChanged, onError, onViewDiff }: Props
                     <button className="file-row" onClick={() => toggleStage(c)}>
                       <span className={`status-tag ${c.status}`}>{c.status}</span> {c.path}
                     </button>
-                    <button className="icon-button" onClick={() => onViewDiff(c.path, false)} title="Ver diff">
-                      ⊞
+                    <button
+                      className="icon-button"
+                      onClick={() => onViewDiff(c.path, false)}
+                      title="Ver diff"
+                      aria-label="Ver diff"
+                    >
+                      <IconDiff />
                     </button>
                   </li>
                 ))}
