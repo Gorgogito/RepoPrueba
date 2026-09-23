@@ -12,6 +12,7 @@ import DiffModal, { DiffRequest } from "./components/DiffModal";
 import CommandPalette, { PaletteCommand } from "./components/CommandPalette";
 import UndoRedoControls from "./components/UndoRedoControls";
 import TerminalPanel from "./components/TerminalPanel";
+import CloneModal from "./components/CloneModal";
 import "./App.css";
 
 interface RepoInfo {
@@ -35,6 +36,7 @@ function App() {
   const [diffRequest, setDiffRequest] = useState<DiffRequest | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [terminalOpen, setTerminalOpen] = useState(false);
+  const [cloneModalOpen, setCloneModalOpen] = useState(false);
 
   useEffect(() => {
     invoke<RepoEntry[]>("list_known_repos")
@@ -120,10 +122,21 @@ function App() {
     }
   }
 
+  async function handleCloned(path: string) {
+    setCloneModalOpen(false);
+    await openRepositoryAtPath(path);
+  }
+
   const commands = useMemo<PaletteCommand[]>(() => {
     const cmds: PaletteCommand[] = [];
 
     cmds.push({ id: "open-dialog", group: "Repositorio", label: "Abrir repositorio...", run: openRepository });
+    cmds.push({
+      id: "clone-dialog",
+      group: "Repositorio",
+      label: "Clonar repositorio...",
+      run: () => setCloneModalOpen(true),
+    });
 
     for (const r of knownRepos) {
       if (repo?.path === r.path) continue;
@@ -224,6 +237,7 @@ function App() {
           onSwitchRepo={openRepositoryAtPath}
           onBrowse={openRepository}
           onForget={forgetRepo}
+          onClone={() => setCloneModalOpen(true)}
         />
         <button className="secondary palette-trigger" onClick={() => setPaletteOpen(true)} title="Paleta de comandos">
           Buscar <span className="palette-shortcut">Ctrl+K</span>
@@ -347,6 +361,8 @@ function App() {
       )}
 
       {paletteOpen && <CommandPalette commands={commands} onClose={() => setPaletteOpen(false)} />}
+
+      {cloneModalOpen && <CloneModal onClose={() => setCloneModalOpen(false)} onCloned={handleCloned} />}
     </div>
   );
 }

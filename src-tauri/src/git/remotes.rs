@@ -76,6 +76,32 @@ pub fn push(path: String, remote_name: String, branch: String) -> Result<(), Str
     run_git(&path, &["push", "-u", &remote_name, &branch]).map(|_| ())
 }
 
+fn repo_name_from_url(url: &str) -> String {
+    let trimmed = url.trim().trim_end_matches('/').trim_end_matches(".git");
+    let name = trimmed.rsplit(['/', '\\']).next().unwrap_or("");
+    if name.is_empty() {
+        "repo".to_string()
+    } else {
+        name.to_string()
+    }
+}
+
+/// Clones `url` into a new folder (named after the repo) inside
+/// `parent_dir`. Returns the resulting local path so the caller can open
+/// it directly, without needing to parse git's "Cloning into '...'"
+/// output to find out where it landed.
+#[tauri::command]
+pub fn clone_repository(url: String, parent_dir: String) -> Result<String, String> {
+    let name = repo_name_from_url(&url);
+    let dest = std::path::Path::new(&parent_dir).join(&name);
+    if dest.exists() {
+        return Err(format!("Ya existe una carpeta '{name}' en el destino"));
+    }
+
+    run_git(&parent_dir, &["clone", &url, &name])?;
+    Ok(dest.to_string_lossy().to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -162,5 +188,44 @@ mod tests {
         // Local commit must still be intact (nothing was clobbered).
         let local_head = local.repo.head().unwrap().peel_to_commit().unwrap();
         assert_eq!(local_head.message().unwrap().trim(), "my local commit");
+    }
+
+    #[test]
+    fn repo_name_from_url_handles_common_forms() {
+        assert_eq!(repo_name_from_url("https://github.com/user/repo.git"), "repo");
+        assert_eq!(repo_name_from_url("https://github.com/user/repo"), "repo");
+        assert_eq!(repo_name_from_url("git@github.com:user/repo.git"), "repo");
+        assert_eq!(repo_name_from_url("https://github.com/user/repo/"), "repo");
+        assert_eq!(repo_name_from_url("C:\\repos\\local-repo"), "local-repo");
+    }
+
+    #[test]
+    fn clone_repository_creates_a_working_copy_at_the_returned_path() {
+        let source = init_repo_with_commit();
+        let bare = init_bare_remote();
+        let branch = source.repo.head().unwrap().shorthand().unwrap().to_string();
+        add_remote(source.path(), "origin".to_string(), bare.path().to_string_lossy().to_string()).unwrap();
+        push(source.path(), "origin".to_string(), branch).unwrap();
+
+        let parent = tempfile::TempDir::new().unwrap();
+        let bare_url = bare.path().to_string_lossy().to_string();
+        let result_path = clone_repository(bare_url, parent.path().to_string_lossy().to_string()).unwrap();
+
+        let cloned = Repository::open(&result_path).unwrap();
+        let cloned_head = cloned.head().unwrap().peel_to_commit().unwrap();
+        let source_head = source.repo.head().unwrap().peel_to_commit().unwrap();
+        assert_eq!(cloned_head.id(), source_head.id());
+        assert!(std::path::Path::new(&result_path).join("initial.txt").exists());
+    }
+
+    #[test]
+    fn clone_repository_refuses_when_destination_already_exists() {
+        let bare = init_bare_remote();
+        let parent = tempfile::TempDir::new().unwrap();
+        std::fs::create_dir(parent.path().join(bare.path().file_name().unwrap())).unwrap();
+
+        let bare_url = bare.path().to_string_lossy().to_string();
+        let err = clone_repository(bare_url, parent.path().to_string_lossy().to_string()).unwrap_err();
+        assert!(err.contains("Ya existe"));
     }
 }

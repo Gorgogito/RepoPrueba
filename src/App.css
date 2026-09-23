@@ -129,6 +129,10 @@
   padding: 0.4em;
 }
 
+.repo-switcher-browse + .repo-switcher-browse {
+  margin-top: 0.4em;
+}
+
 .palette-trigger {
   display: flex;
   align-items: center;
@@ -700,6 +704,47 @@ button:hover {
   padding: 1rem 1.25rem;
 }
 
+.clone-modal {
+  width: min(520px, 92vw);
+}
+
+.clone-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.clone-form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  font-size: 0.85em;
+  color: #6b7280;
+}
+
+.clone-form-label input {
+  font-size: 1em;
+  color: inherit;
+  padding: 0.5em 0.7em;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: "SF Mono", Consolas, monospace;
+}
+
+.clone-destination-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.clone-destination-row input {
+  flex: 1;
+}
+
+.clone-form button[type="submit"] {
+  align-self: flex-end;
+}
+
 .file-diff {
   margin-bottom: 1.5rem;
 }
@@ -1035,6 +1080,12 @@ li .icon-button {
 
   .diff-lineno {
     color: #6b7280;
+  }
+
+  .clone-form-label input {
+    background: #1f2023;
+    color: #e5e7eb;
+    border-color: #4b4f56;
   }
 
   .diff-line-add {

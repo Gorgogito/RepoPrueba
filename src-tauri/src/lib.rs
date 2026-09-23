@@ -26,6 +26,7 @@ pub fn run() {
             git::remotes::fetch,
             git::remotes::pull,
             git::remotes::push,
+            git::remotes::clone_repository,
             git::history_ops::merge_branch,
             git::history_ops::cherry_pick,
             git::history_ops::revert_commit,

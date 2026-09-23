@@ -12,9 +12,10 @@ interface Props {
   onSwitchRepo: (path: string) => void;
   onBrowse: () => void;
   onForget: (path: string) => void;
+  onClone: () => void;
 }
 
-function RepoSwitcher({ currentName, repos, onSwitchRepo, onBrowse, onForget }: Props) {
+function RepoSwitcher({ currentName, repos, onSwitchRepo, onBrowse, onForget, onClone }: Props) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -72,6 +73,15 @@ function RepoSwitcher({ currentName, repos, onSwitchRepo, onBrowse, onForget }: 
             }}
           >
             Explorar carpeta...
+          </button>
+          <button
+            className="repo-switcher-browse"
+            onClick={() => {
+              setOpen(false);
+              onClone();
+            }}
+          >
+            Clonar repositorio...
           </button>
         </div>
       )}
