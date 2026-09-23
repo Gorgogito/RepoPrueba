@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { IconChevronDown, IconClose } from "./icons";
 
 export interface RepoEntry {
@@ -9,23 +8,15 @@ export interface RepoEntry {
 
 interface Props {
   currentName: string | null;
-  reposVersion: number;
+  repos: RepoEntry[];
   onSwitchRepo: (path: string) => void;
   onBrowse: () => void;
-  onError: (message: string) => void;
+  onForget: (path: string) => void;
 }
 
-function RepoSwitcher({ currentName, reposVersion, onSwitchRepo, onBrowse, onError }: Props) {
-  const [repos, setRepos] = useState<RepoEntry[]>([]);
+function RepoSwitcher({ currentName, repos, onSwitchRepo, onBrowse, onForget }: Props) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    invoke<RepoEntry[]>("list_known_repos")
-      .then(setRepos)
-      .catch((err) => onError(String(err)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reposVersion]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -36,16 +27,6 @@ function RepoSwitcher({ currentName, reposVersion, onSwitchRepo, onBrowse, onErr
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  async function forget(path: string, e: React.MouseEvent) {
-    e.stopPropagation();
-    try {
-      const updated = await invoke<RepoEntry[]>("remove_known_repo", { path });
-      setRepos(updated);
-    } catch (err) {
-      onError(String(err));
-    }
-  }
 
   return (
     <div className="repo-switcher" ref={containerRef}>
@@ -71,7 +52,10 @@ function RepoSwitcher({ currentName, reposVersion, onSwitchRepo, onBrowse, onErr
                 </button>
                 <button
                   className="icon-button delete"
-                  onClick={(e) => forget(r.path, e)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onForget(r.path);
+                  }}
                   title="Quitar de la lista"
                   aria-label="Quitar de la lista"
                 >

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import BranchSidebar, { BranchInfo } from "./components/BranchSidebar";
@@ -7,8 +7,10 @@ import RemoteControls, { RemoteInfo } from "./components/RemoteControls";
 import StashPanel, { StashInfo } from "./components/StashPanel";
 import ConflictResolver, { OperationStatus } from "./components/ConflictResolver";
 import CommitGraph from "./components/CommitGraph";
-import RepoSwitcher from "./components/RepoSwitcher";
+import RepoSwitcher, { RepoEntry } from "./components/RepoSwitcher";
 import DiffModal, { DiffRequest } from "./components/DiffModal";
+import CommandPalette, { PaletteCommand } from "./components/CommandPalette";
+import UndoRedoControls from "./components/UndoRedoControls";
 import "./App.css";
 
 interface RepoInfo {
@@ -28,7 +30,26 @@ function App() {
   const [tab, setTab] = useState<"changes" | "history">("changes");
   const [historyVersion, setHistoryVersion] = useState(0);
   const [reposVersion, setReposVersion] = useState(0);
+  const [knownRepos, setKnownRepos] = useState<RepoEntry[]>([]);
   const [diffRequest, setDiffRequest] = useState<DiffRequest | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    invoke<RepoEntry[]>("list_known_repos")
+      .then(setKnownRepos)
+      .catch((err) => setError(String(err)));
+  }, [reposVersion]);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   async function loadRepoData(path: string) {
     const [info, repoStatus, branchList, remoteList, stashList, operationStatus] = await Promise.all([
@@ -83,18 +104,123 @@ function App() {
   }
 
 
+  async function forgetRepo(path: string) {
+    try {
+      const updated = await invoke<RepoEntry[]>("remove_known_repo", { path });
+      setKnownRepos(updated);
+    } catch (err) {
+      setError(String(err));
+    }
+  }
 
+  const commands = useMemo<PaletteCommand[]>(() => {
+    const cmds: PaletteCommand[] = [];
+
+    cmds.push({ id: "open-dialog", group: "Repositorio", label: "Abrir repositorio...", run: openRepository });
+
+    for (const r of knownRepos) {
+      if (repo?.path === r.path) continue;
+      cmds.push({
+        id: `repo-${r.path}`,
+        group: "Repositorios",
+        label: `Cambiar a repositorio: ${r.name}`,
+        run: () => openRepositoryAtPath(r.path),
+      });
+    }
+
+    if (repo) {
+      cmds.push({ id: "tab-changes", group: "Navegación", label: "Ver cambios", run: () => setTab("changes") });
+      cmds.push({ id: "tab-history", group: "Navegación", label: "Ver historial", run: () => setTab("history") });
+
+      for (const b of branches) {
+        if (b.is_head) continue;
+        cmds.push({
+          id: `checkout-${b.name}`,
+          group: "Ramas",
+          label: `Cambiar a rama: ${b.name}`,
+          run: () => {
+            invoke("checkout_branch", { path: repo.path, name: b.name })
+              .catch((err) => setError(String(err)))
+              .finally(refresh);
+          },
+        });
+        cmds.push({
+          id: `merge-${b.name}`,
+          group: "Ramas",
+          label: `Mezclar '${b.name}' en la rama actual`,
+          run: () => {
+            invoke("merge_branch", { path: repo.path, branch: b.name })
+              .catch((err) => setError(String(err)))
+              .finally(refresh);
+          },
+        });
+      }
+
+      const remote = remotes[0];
+      if (remote) {
+        cmds.push({
+          id: "fetch",
+          group: "Remoto",
+          label: `Fetch (${remote.name})`,
+          run: () => {
+            invoke("fetch", { path: repo.path, remoteName: remote.name })
+              .catch((err) => setError(String(err)))
+              .finally(refresh);
+          },
+        });
+        cmds.push({
+          id: "pull",
+          group: "Remoto",
+          label: `Pull (${remote.name})`,
+          run: () => {
+            invoke("pull", { path: repo.path, remoteName: remote.name })
+              .catch((err) => setError(String(err)))
+              .finally(refresh);
+          },
+        });
+        cmds.push({
+          id: "push",
+          group: "Remoto",
+          label: `Push (${remote.name})`,
+          run: () => {
+            invoke("push", { path: repo.path, remoteName: remote.name, branch: repo.current_branch })
+              .catch((err) => setError(String(err)))
+              .finally(refresh);
+          },
+        });
+      }
+
+      if (status && !status.is_clean) {
+        cmds.push({
+          id: "stash-save",
+          group: "Stash",
+          label: "Guardar cambios en un stash",
+          run: () => {
+            invoke("stash_save", { path: repo.path, message: null })
+              .catch((err) => setError(String(err)))
+              .finally(refresh);
+          },
+        });
+      }
+    }
+
+    return cmds;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [repo, branches, remotes, knownRepos, status]);
 
   return (
     <div className="app-shell">
       <header className="toolbar">
         <RepoSwitcher
           currentName={repo?.name ?? null}
-          reposVersion={reposVersion}
+          repos={knownRepos}
           onSwitchRepo={openRepositoryAtPath}
           onBrowse={openRepository}
-          onError={setError}
+          onForget={forgetRepo}
         />
+        <button className="secondary palette-trigger" onClick={() => setPaletteOpen(true)} title="Paleta de comandos">
+          Buscar <span className="palette-shortcut">Ctrl+K</span>
+        </button>
         {repo && (
           <div className="repo-summary">
             <strong>{repo.name}</strong>
@@ -105,6 +231,14 @@ function App() {
               </span>
             )}
           </div>
+        )}
+        {repo && (
+          <UndoRedoControls
+            repoPath={repo.path}
+            refreshToken={historyVersion}
+            onChanged={refresh}
+            onError={setError}
+          />
         )}
         {repo && (
           <RemoteControls
@@ -182,6 +316,8 @@ function App() {
       {repo && diffRequest && (
         <DiffModal repoPath={repo.path} request={diffRequest} onClose={() => setDiffRequest(null)} />
       )}
+
+      {paletteOpen && <CommandPalette commands={commands} onClose={() => setPaletteOpen(false)} />}
     </div>
   );
 }

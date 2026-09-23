@@ -7,6 +7,7 @@ pub mod log;
 pub mod remotes;
 pub mod repo;
 pub mod stash;
+pub mod undo;
 #[cfg(test)]
 mod test_support;
 

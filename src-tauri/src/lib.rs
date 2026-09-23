@@ -6,6 +6,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .manage(git::undo::UndoState::default())
         .invoke_handler(tauri::generate_handler![
             git::repo::open_repository,
             git::repo::get_repo_status,
@@ -41,7 +42,11 @@ pub fn run() {
             git::diff::get_commit_diff,
             workspace::list_known_repos,
             workspace::add_known_repo,
-            workspace::remove_known_repo
+            workspace::remove_known_repo,
+            git::undo::get_undo_preview,
+            git::undo::get_redo_preview,
+            git::undo::undo_last_operation,
+            git::undo::redo_last_undo
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

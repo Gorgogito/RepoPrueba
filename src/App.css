@@ -91,6 +91,88 @@
   padding: 0.4em;
 }
 
+.palette-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  color: #6b7280;
+}
+
+.palette-shortcut {
+  font-family: "SF Mono", Consolas, monospace;
+  font-size: 0.75em;
+  background: #e5e7eb;
+  color: #374151;
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+}
+
+.command-palette {
+  width: min(560px, 92vw);
+  max-height: 60vh;
+}
+
+.command-palette-input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  border-radius: 10px 10px 0 0;
+  padding: 0.9em 1.1em;
+  font-size: 1em;
+  background: transparent;
+  color: inherit;
+}
+
+.command-palette-input:focus {
+  outline: none;
+}
+
+.command-palette-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.4rem;
+  overflow-y: auto;
+  max-height: calc(60vh - 3.2em);
+}
+
+.command-palette-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6em;
+  padding: 0.5em 0.7em;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.command-palette-list li.current {
+  background: #396cd8;
+  color: #ffffff;
+}
+
+.command-palette-list li.current .command-group {
+  color: #dbe4fb;
+}
+
+.command-palette-empty {
+  cursor: default;
+}
+
+.command-group {
+  flex-shrink: 0;
+  width: 90px;
+  font-size: 0.8em;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.command-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .repo-switcher-browse:hover {
   background: #eceef1;
 }
@@ -224,6 +306,16 @@
   display: flex;
   gap: 0.5rem;
   margin-left: auto;
+}
+
+.undo-redo-controls {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.undo-redo-controls .icon-button {
+  width: 28px;
+  height: 28px;
 }
 
 button.secondary {
@@ -767,6 +859,19 @@ li .icon-button {
     background: #1f2023;
     border-color: #4b4f56;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .palette-shortcut {
+    background: #2d2f34;
+    color: #d1d5db;
+  }
+
+  .command-palette-input {
+    border-color: #33353a;
+  }
+
+  .command-palette-list li:not(.current):hover {
+    background: #26282d;
   }
 
   .repo-switcher-list li:hover {

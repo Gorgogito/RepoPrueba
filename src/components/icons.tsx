@@ -120,3 +120,21 @@ export function IconStashApply(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function IconUndo(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base(props)}>
+      <path d="M3.5 8a4.7 4.7 0 1 1 1.4 3.3" />
+      <path d="M3.2 4.3l0.3 3.7 3.7-0.3" />
+    </svg>
+  );
+}
+
+export function IconRedo(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base(props)}>
+      <path d="M12.5 8a4.7 4.7 0 1 0-1.4 3.3" />
+      <path d="M12.8 4.3l-0.3 3.7-3.7-0.3" />
+    </svg>
+  );
+}
