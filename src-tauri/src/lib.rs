@@ -34,7 +34,8 @@ pub fn run() {
             git::conflicts::read_working_file,
             git::conflicts::resolve_conflict,
             git::conflicts::continue_operation,
-            git::conflicts::abort_operation
+            git::conflicts::abort_operation,
+            git::log::get_commit_log
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

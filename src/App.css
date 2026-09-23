@@ -27,6 +27,110 @@
   padding: 1.5rem;
 }
 
+.tab-bar {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tab-button {
+  background: transparent;
+  color: #6b7280;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0.5em 0.9em;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-button:hover {
+  background: transparent;
+  color: #16181d;
+}
+
+.tab-button.active {
+  color: #396cd8;
+  border-bottom-color: #396cd8;
+  font-weight: 600;
+}
+
+.commit-graph {
+  display: flex;
+  gap: 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.commit-graph-svg {
+  flex-shrink: 0;
+}
+
+.commit-list {
+  flex: 1;
+  min-width: 0;
+}
+
+.commit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px 160px 70px 60px;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85em;
+  border-bottom: 1px solid transparent;
+}
+
+.commit-row:hover {
+  background: #eceef1;
+}
+
+.commit-row:hover .commit-row-actions {
+  visibility: visible;
+}
+
+.commit-summary {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.ref-badge {
+  flex-shrink: 0;
+  background: #e5e7eb;
+  color: #374151;
+  border-radius: 4px;
+  padding: 0.05em 0.4em;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+.commit-message {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.commit-author,
+.commit-date {
+  color: #6b7280;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.commit-sha {
+  font-family: "SF Mono", Consolas, monospace;
+  color: #6b7280;
+}
+
+.commit-row-actions {
+  display: flex;
+  gap: 0.25rem;
+  visibility: hidden;
+}
+
 .toolbar {
   display: flex;
   align-items: center;
@@ -234,35 +338,6 @@ button:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.history-tools {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
-  max-width: 520px;
-}
-
-.history-tools h3 {
-  font-size: 0.9em;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #6b7280;
-  margin-bottom: 0.3em;
-}
-
-.history-tools-row {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.history-tools-row input {
-  flex: 1;
-  padding: 0.4em 0.6em;
-  font-size: 0.85em;
-  font-family: "SF Mono", Consolas, monospace;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
 }
 
 .conflict-resolver {
@@ -508,14 +583,21 @@ li {
     border-color: #4b4f56;
   }
 
-  .history-tools {
+  .tab-bar {
     border-color: #33353a;
   }
 
-  .history-tools-row input {
-    background: #1f2023;
+  .tab-button:hover {
     color: #e5e7eb;
-    border-color: #4b4f56;
+  }
+
+  .commit-row:hover {
+    background: #26282d;
+  }
+
+  .ref-badge {
+    background: #2d2f34;
+    color: #d1d5db;
   }
 
   .conflict-message {

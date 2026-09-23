@@ -5,8 +5,8 @@ import BranchSidebar, { BranchInfo } from "./components/BranchSidebar";
 import CommitPanel, { RepoStatus } from "./components/CommitPanel";
 import RemoteControls, { RemoteInfo } from "./components/RemoteControls";
 import StashPanel, { StashInfo } from "./components/StashPanel";
-import HistoryTools from "./components/HistoryTools";
 import ConflictResolver, { OperationStatus } from "./components/ConflictResolver";
+import CommitGraph from "./components/CommitGraph";
 import "./App.css";
 
 interface RepoInfo {
@@ -23,6 +23,8 @@ function App() {
   const [stashes, setStashes] = useState<StashInfo[]>([]);
   const [operation, setOperation] = useState<OperationStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<"changes" | "history">("changes");
+  const [historyVersion, setHistoryVersion] = useState(0);
 
   async function loadRepoData(path: string) {
     const [info, repoStatus, branchList, remoteList, stashList, operationStatus] = await Promise.all([
@@ -48,6 +50,8 @@ function App() {
 
     try {
       await loadRepoData(selected);
+      setHistoryVersion((v) => v + 1);
+      setTab("changes");
     } catch (err) {
       setRepo(null);
       setStatus(null);
@@ -63,6 +67,7 @@ function App() {
     if (!repo) return;
     try {
       await loadRepoData(repo.path);
+      setHistoryVersion((v) => v + 1);
     } catch (err) {
       setError(String(err));
     }
@@ -114,13 +119,33 @@ function App() {
           {repo && status && (
             <>
               <p className="repo-path">{repo.path}</p>
+
+              <div className="tab-bar">
+                <button
+                  className={`tab-button ${tab === "changes" ? "active" : ""}`}
+                  onClick={() => setTab("changes")}
+                >
+                  Cambios
+                </button>
+                <button
+                  className={`tab-button ${tab === "history" ? "active" : ""}`}
+                  onClick={() => setTab("history")}
+                >
+                  Historial
+                </button>
+              </div>
+
               {operation ? (
                 <ConflictResolver repoPath={repo.path} operation={operation} onChanged={refresh} onError={setError} />
+              ) : tab === "changes" ? (
+                <CommitPanel repoPath={repo.path} status={status} onChanged={refresh} onError={setError} />
               ) : (
-                <>
-                  <CommitPanel repoPath={repo.path} status={status} onChanged={refresh} onError={setError} />
-                  <HistoryTools repoPath={repo.path} onChanged={refresh} onError={setError} />
-                </>
+                <CommitGraph
+                  repoPath={repo.path}
+                  refreshToken={historyVersion}
+                  onChanged={refresh}
+                  onError={setError}
+                />
               )}
             </>
           )}
