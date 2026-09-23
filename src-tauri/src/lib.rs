@@ -1,4 +1,5 @@
 mod git;
+mod github;
 mod terminal;
 mod workspace;
 
@@ -55,7 +56,14 @@ pub fn run() {
             terminal::terminal_start,
             terminal::terminal_write,
             terminal::terminal_resize,
-            terminal::terminal_stop
+            terminal::terminal_stop,
+            github::github_status,
+            github::github_connect,
+            github::github_disconnect,
+            github::github_list_pull_requests,
+            github::github_get_pull_request,
+            github::github_create_pull_request,
+            github::github_merge_pull_request
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

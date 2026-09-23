@@ -13,6 +13,7 @@ import CommandPalette, { PaletteCommand } from "./components/CommandPalette";
 import UndoRedoControls from "./components/UndoRedoControls";
 import TerminalPanel from "./components/TerminalPanel";
 import CloneModal from "./components/CloneModal";
+import PullRequestsPanel from "./components/PullRequestsPanel";
 import "./App.css";
 
 interface RepoInfo {
@@ -29,7 +30,7 @@ function App() {
   const [stashes, setStashes] = useState<StashInfo[]>([]);
   const [operation, setOperation] = useState<OperationStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<"changes" | "history">("changes");
+  const [tab, setTab] = useState<"changes" | "history" | "pulls">("changes");
   const [historyVersion, setHistoryVersion] = useState(0);
   const [reposVersion, setReposVersion] = useState(0);
   const [knownRepos, setKnownRepos] = useState<RepoEntry[]>([]);
@@ -151,6 +152,7 @@ function App() {
     if (repo) {
       cmds.push({ id: "tab-changes", group: "Navegación", label: "Ver cambios", run: () => setTab("changes") });
       cmds.push({ id: "tab-history", group: "Navegación", label: "Ver historial", run: () => setTab("history") });
+      cmds.push({ id: "tab-pulls", group: "Navegación", label: "Ver Pull Requests", run: () => setTab("pulls") });
 
       for (const b of branches) {
         if (b.is_head) continue;
@@ -315,6 +317,12 @@ function App() {
                 >
                   Historial
                 </button>
+                <button
+                  className={`tab-button ${tab === "pulls" ? "active" : ""}`}
+                  onClick={() => setTab("pulls")}
+                >
+                  Pull Requests
+                </button>
               </div>
 
               {operation ? (
@@ -327,13 +335,21 @@ function App() {
                   onError={setError}
                   onViewDiff={(file, staged) => setDiffRequest({ kind: "working", file, staged })}
                 />
-              ) : (
+              ) : tab === "history" ? (
                 <CommitGraph
                   repoPath={repo.path}
                   refreshToken={historyVersion}
                   onChanged={refresh}
                   onError={setError}
                   onViewDiff={(sha, label) => setDiffRequest({ kind: "commit", sha, label })}
+                />
+              ) : (
+                <PullRequestsPanel
+                  repoPath={repo.path}
+                  branchNames={branches.map((b) => b.name)}
+                  currentBranch={repo.current_branch}
+                  refreshToken={historyVersion}
+                  onError={setError}
                 />
               )}
             </>
