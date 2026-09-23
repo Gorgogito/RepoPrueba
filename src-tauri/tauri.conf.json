@@ -13,10 +13,11 @@
     "windows": [
       {
         "title": "Stash",
-        "width": 1280,
-        "height": 800,
+        "width": 1200,
+        "height": 720,
         "minWidth": 760,
-        "minHeight": 480
+        "minHeight": 480,
+        "center": true
       }
     ],
     "security": {
