@@ -37,6 +37,8 @@ pub fn run() {
             git::conflicts::continue_operation,
             git::conflicts::abort_operation,
             git::log::get_commit_log,
+            git::diff::get_working_diff,
+            git::diff::get_commit_diff,
             workspace::list_known_repos,
             workspace::add_known_repo,
             workspace::remove_known_repo

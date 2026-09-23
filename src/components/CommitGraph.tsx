@@ -97,9 +97,10 @@ interface Props {
   refreshToken: number;
   onChanged: () => void;
   onError: (message: string) => void;
+  onViewDiff: (sha: string, label: string) => void;
 }
 
-function CommitGraph({ repoPath, refreshToken, onChanged, onError }: Props) {
+function CommitGraph({ repoPath, refreshToken, onChanged, onError, onViewDiff }: Props) {
   const [commits, setCommits] = useState<CommitInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [busySha, setBusySha] = useState<string | null>(null);
@@ -171,7 +172,9 @@ function CommitGraph({ repoPath, refreshToken, onChanged, onError }: Props) {
                   {ref}
                 </span>
               ))}
-              <span className="commit-message">{row.summary}</span>
+              <button className="commit-message" onClick={() => onViewDiff(row.sha, row.summary)}>
+                {row.summary}
+              </button>
             </div>
             <span className="commit-author">{row.author_name}</span>
             <span className="commit-date">{formatDate(row.timestamp)}</span>

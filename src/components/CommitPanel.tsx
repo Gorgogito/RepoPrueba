@@ -19,9 +19,10 @@ interface Props {
   status: RepoStatus;
   onChanged: () => void;
   onError: (message: string) => void;
+  onViewDiff: (file: string, staged: boolean) => void;
 }
 
-function CommitPanel({ repoPath, status, onChanged, onError }: Props) {
+function CommitPanel({ repoPath, status, onChanged, onError, onViewDiff }: Props) {
   const [message, setMessage] = useState("");
   const [committing, setCommitting] = useState(false);
 
@@ -96,6 +97,9 @@ function CommitPanel({ repoPath, status, onChanged, onError }: Props) {
                     <button className="file-row" onClick={() => toggleStage(c)}>
                       <span className={`status-tag ${c.status}`}>{c.status}</span> {c.path}
                     </button>
+                    <button className="icon-button" onClick={() => onViewDiff(c.path, true)} title="Ver diff">
+                      ⊞
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -114,6 +118,9 @@ function CommitPanel({ repoPath, status, onChanged, onError }: Props) {
                   <li key={`u-${c.path}`}>
                     <button className="file-row" onClick={() => toggleStage(c)}>
                       <span className={`status-tag ${c.status}`}>{c.status}</span> {c.path}
+                    </button>
+                    <button className="icon-button" onClick={() => onViewDiff(c.path, false)} title="Ver diff">
+                      ⊞
                     </button>
                   </li>
                 ))}

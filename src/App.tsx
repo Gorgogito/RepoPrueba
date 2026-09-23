@@ -8,6 +8,7 @@ import StashPanel, { StashInfo } from "./components/StashPanel";
 import ConflictResolver, { OperationStatus } from "./components/ConflictResolver";
 import CommitGraph from "./components/CommitGraph";
 import RepoSwitcher from "./components/RepoSwitcher";
+import DiffModal, { DiffRequest } from "./components/DiffModal";
 import "./App.css";
 
 interface RepoInfo {
@@ -27,6 +28,7 @@ function App() {
   const [tab, setTab] = useState<"changes" | "history">("changes");
   const [historyVersion, setHistoryVersion] = useState(0);
   const [reposVersion, setReposVersion] = useState(0);
+  const [diffRequest, setDiffRequest] = useState<DiffRequest | null>(null);
 
   async function loadRepoData(path: string) {
     const [info, repoStatus, branchList, remoteList, stashList, operationStatus] = await Promise.all([
@@ -79,6 +81,7 @@ function App() {
       setError(String(err));
     }
   }
+
 
 
   return (
@@ -152,13 +155,20 @@ function App() {
               {operation ? (
                 <ConflictResolver repoPath={repo.path} operation={operation} onChanged={refresh} onError={setError} />
               ) : tab === "changes" ? (
-                <CommitPanel repoPath={repo.path} status={status} onChanged={refresh} onError={setError} />
+                <CommitPanel
+                  repoPath={repo.path}
+                  status={status}
+                  onChanged={refresh}
+                  onError={setError}
+                  onViewDiff={(file, staged) => setDiffRequest({ kind: "working", file, staged })}
+                />
               ) : (
                 <CommitGraph
                   repoPath={repo.path}
                   refreshToken={historyVersion}
                   onChanged={refresh}
                   onError={setError}
+                  onViewDiff={(sha, label) => setDiffRequest({ kind: "commit", sha, label })}
                 />
               )}
             </>
@@ -167,6 +177,10 @@ function App() {
           {!repo && !error && <p className="hint">Selecciona un repositorio local para ver su estado.</p>}
         </main>
       </div>
+
+      {repo && diffRequest && (
+        <DiffModal repoPath={repo.path} request={diffRequest} onClose={() => setDiffRequest(null)} />
+      )}
     </div>
   );
 }
