@@ -11,6 +11,7 @@ import RepoSwitcher, { RepoEntry } from "./components/RepoSwitcher";
 import DiffModal, { DiffRequest } from "./components/DiffModal";
 import CommandPalette, { PaletteCommand } from "./components/CommandPalette";
 import UndoRedoControls from "./components/UndoRedoControls";
+import TerminalPanel from "./components/TerminalPanel";
 import "./App.css";
 
 interface RepoInfo {
@@ -33,6 +34,7 @@ function App() {
   const [knownRepos, setKnownRepos] = useState<RepoEntry[]>([]);
   const [diffRequest, setDiffRequest] = useState<DiffRequest | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [terminalOpen, setTerminalOpen] = useState(false);
 
   useEffect(() => {
     invoke<RepoEntry[]>("list_known_repos")
@@ -45,6 +47,10 @@ function App() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setPaletteOpen((v) => !v);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "`") {
+        e.preventDefault();
+        setTerminalOpen((v) => !v);
       }
     }
     window.addEventListener("keydown", onKeyDown);
@@ -102,6 +108,7 @@ function App() {
       setError(String(err));
     }
   }
+
 
 
   async function forgetRepo(path: string) {
@@ -249,6 +256,15 @@ function App() {
             onError={setError}
           />
         )}
+        {repo && (
+          <button
+            className={`secondary terminal-trigger ${terminalOpen ? "active" : ""}`}
+            onClick={() => setTerminalOpen((v) => !v)}
+            title="Consola (Ctrl+`)"
+          >
+            Consola
+          </button>
+        )}
       </header>
 
       <div className="app-body">
@@ -312,6 +328,19 @@ function App() {
           {!repo && !error && <p className="hint">Selecciona un repositorio local para ver su estado.</p>}
         </main>
       </div>
+
+      {repo && terminalOpen && (
+        <TerminalPanel
+          repoPath={repo.path}
+          onClose={() => {
+            setTerminalOpen(false);
+            // Commands run by hand in the terminal (git or otherwise) can
+            // change repo state we'd otherwise only learn about on the next
+            // unrelated action — refresh as soon as the user steps away.
+            refresh();
+          }}
+        />
+      )}
 
       {repo && diffRequest && (
         <DiffModal repoPath={repo.path} request={diffRequest} onClose={() => setDiffRequest(null)} />

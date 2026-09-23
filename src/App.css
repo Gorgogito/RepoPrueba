@@ -21,6 +21,44 @@
   min-height: 0;
 }
 
+.terminal-panel {
+  display: flex;
+  flex-direction: column;
+  height: 280px;
+  flex-shrink: 0;
+  border-top: 1px solid #e5e7eb;
+  background: #f6f6f7;
+}
+
+.terminal-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.terminal-panel-title {
+  font-size: 0.8em;
+  font-family: "SF Mono", Consolas, monospace;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-container {
+  flex: 1;
+  min-height: 0;
+  padding: 0.4rem;
+}
+
+.terminal-trigger.active {
+  background-color: #396cd8;
+  color: #ffffff;
+  border-color: #396cd8;
+}
+
 .container {
   flex: 1;
   overflow-y: auto;
@@ -853,6 +891,15 @@ li .icon-button {
 
   .branch {
     background: #2d2f34;
+  }
+
+  .terminal-panel {
+    background: #1a1b1e;
+    border-color: #33353a;
+  }
+
+  .terminal-panel-header {
+    border-color: #33353a;
   }
 
   .repo-switcher-menu {

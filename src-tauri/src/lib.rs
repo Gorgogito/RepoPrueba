@@ -1,5 +1,8 @@
 mod git;
+mod terminal;
 mod workspace;
+
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -7,6 +10,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(git::undo::UndoState::default())
+        .manage(terminal::TerminalState::default())
         .invoke_handler(tauri::generate_handler![
             git::repo::open_repository,
             git::repo::get_repo_status,
@@ -46,8 +50,18 @@ pub fn run() {
             git::undo::get_undo_preview,
             git::undo::get_redo_preview,
             git::undo::undo_last_operation,
-            git::undo::redo_last_undo
+            git::undo::redo_last_undo,
+            terminal::terminal_start,
+            terminal::terminal_write,
+            terminal::terminal_resize,
+            terminal::terminal_stop
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app_handle, event| {
+            if let tauri::RunEvent::Exit = event {
+                let state = app_handle.state::<terminal::TerminalState>();
+                terminal::kill_session(&state);
+            }
+        });
 }
