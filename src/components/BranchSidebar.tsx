@@ -56,11 +56,13 @@ function BranchSidebar({ repoPath, branches, onChanged, onError }: Props) {
     setBusyBranch(name);
     try {
       await invoke("merge_branch", { path: repoPath, branch: name });
-      onChanged();
     } catch (err) {
       onError(String(err));
     } finally {
       setBusyBranch(null);
+      // A conflict is a failed invoke() but a real state change (files/index
+      // now hold conflict markers) — always refresh, not just on success.
+      onChanged();
     }
   }
 
@@ -68,11 +70,11 @@ function BranchSidebar({ repoPath, branches, onChanged, onError }: Props) {
     setBusyBranch(name);
     try {
       await invoke("rebase_branch", { path: repoPath, ontoBranch: name });
-      onChanged();
     } catch (err) {
       onError(String(err));
     } finally {
       setBusyBranch(null);
+      onChanged();
     }
   }
 

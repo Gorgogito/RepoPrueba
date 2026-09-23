@@ -88,7 +88,6 @@ pub fn cherry_pick(path: String, commit_sha: String) -> Result<(), String> {
 
     let mut index = repo.index().map_err(err_msg)?;
     if index.has_conflicts() {
-        repo.cleanup_state().map_err(err_msg)?;
         return Err("El cherry-pick tiene conflictos que resolver manualmente".to_string());
     }
 
@@ -114,7 +113,6 @@ pub fn revert_commit(path: String, commit_sha: String) -> Result<(), String> {
 
     let mut index = repo.index().map_err(err_msg)?;
     if index.has_conflicts() {
-        repo.cleanup_state().map_err(err_msg)?;
         return Err("El revert tiene conflictos que resolver manualmente".to_string());
     }
 

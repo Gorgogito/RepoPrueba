@@ -41,18 +41,22 @@ function CommitPanel({ repoPath, status, onChanged, onError }: Props) {
   async function stageAll() {
     try {
       await Promise.all(unstaged.map((c) => invoke("stage_file", { path: repoPath, file: c.path })));
-      onChanged();
     } catch (err) {
       onError(String(err));
+    } finally {
+      // Promise.all rejects on the first failure but doesn't undo the
+      // others that already succeeded — always refresh to reflect reality.
+      onChanged();
     }
   }
 
   async function unstageAll() {
     try {
       await Promise.all(staged.map((c) => invoke("unstage_file", { path: repoPath, file: c.path })));
-      onChanged();
     } catch (err) {
       onError(String(err));
+    } finally {
+      onChanged();
     }
   }
 

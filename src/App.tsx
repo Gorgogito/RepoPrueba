@@ -6,6 +6,7 @@ import CommitPanel, { RepoStatus } from "./components/CommitPanel";
 import RemoteControls, { RemoteInfo } from "./components/RemoteControls";
 import StashPanel, { StashInfo } from "./components/StashPanel";
 import HistoryTools from "./components/HistoryTools";
+import ConflictResolver, { OperationStatus } from "./components/ConflictResolver";
 import "./App.css";
 
 interface RepoInfo {
@@ -20,21 +21,24 @@ function App() {
   const [branches, setBranches] = useState<BranchInfo[]>([]);
   const [remotes, setRemotes] = useState<RemoteInfo[]>([]);
   const [stashes, setStashes] = useState<StashInfo[]>([]);
+  const [operation, setOperation] = useState<OperationStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function loadRepoData(path: string) {
-    const [info, repoStatus, branchList, remoteList, stashList] = await Promise.all([
+    const [info, repoStatus, branchList, remoteList, stashList, operationStatus] = await Promise.all([
       invoke<RepoInfo>("open_repository", { path }),
       invoke<RepoStatus>("get_repo_status", { path }),
       invoke<BranchInfo[]>("list_branches", { path }),
       invoke<RemoteInfo[]>("list_remotes", { path }),
       invoke<StashInfo[]>("stash_list", { path }),
+      invoke<OperationStatus>("get_operation_status", { path }),
     ]);
     setRepo(info);
     setStatus(repoStatus);
     setBranches(branchList);
     setRemotes(remoteList);
     setStashes(stashList);
+    setOperation(operationStatus.kind === "none" ? null : operationStatus);
   }
 
   async function openRepository() {
@@ -50,6 +54,7 @@ function App() {
       setBranches([]);
       setRemotes([]);
       setStashes([]);
+      setOperation(null);
       setError(String(err));
     }
   }
@@ -109,8 +114,14 @@ function App() {
           {repo && status && (
             <>
               <p className="repo-path">{repo.path}</p>
-              <CommitPanel repoPath={repo.path} status={status} onChanged={refresh} onError={setError} />
-              <HistoryTools repoPath={repo.path} onChanged={refresh} onError={setError} />
+              {operation ? (
+                <ConflictResolver repoPath={repo.path} operation={operation} onChanged={refresh} onError={setError} />
+              ) : (
+                <>
+                  <CommitPanel repoPath={repo.path} status={status} onChanged={refresh} onError={setError} />
+                  <HistoryTools repoPath={repo.path} onChanged={refresh} onError={setError} />
+                </>
+              )}
             </>
           )}
 

@@ -1,5 +1,6 @@
 pub mod branches;
 pub mod changes;
+pub mod conflicts;
 pub mod history_ops;
 pub mod remotes;
 pub mod repo;

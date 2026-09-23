@@ -18,11 +18,13 @@ function HistoryTools({ repoPath, onChanged, onError }: Props) {
     try {
       await invoke(command, { path: repoPath, commitSha });
       setSha("");
-      onChanged();
     } catch (err) {
       onError(String(err));
     } finally {
       setBusy(false);
+      // A conflict is a failed invoke() but a real state change — always
+      // refresh so the conflict-resolution panel can pick it up.
+      onChanged();
     }
   }
 

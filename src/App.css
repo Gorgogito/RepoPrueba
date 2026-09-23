@@ -265,6 +265,91 @@ button:hover {
   border-radius: 6px;
 }
 
+.conflict-resolver {
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 1rem;
+  max-width: 720px;
+}
+
+.conflict-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.conflict-header h2 {
+  font-size: 1.1em;
+  margin: 0 0 0.2em 0;
+}
+
+.conflict-message {
+  color: #6b7280;
+  font-size: 0.85em;
+  margin: 0;
+}
+
+.conflict-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.conflict-body {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.conflict-file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  min-width: 180px;
+}
+
+.conflict-file-list li {
+  border-radius: 4px;
+}
+
+.conflict-file-list li.current {
+  background: #fef3c7;
+}
+
+.conflict-file-list .branch-name {
+  font-size: 0.85em;
+  color: #b45309;
+}
+
+.conflict-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.conflict-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.conflict-file-name {
+  font-family: "SF Mono", Consolas, monospace;
+  font-size: 0.85em;
+  margin-right: auto;
+}
+
+.conflict-textarea {
+  width: 100%;
+  min-height: 260px;
+  font-family: "SF Mono", Consolas, monospace;
+  font-size: 0.85em;
+  padding: 0.6em;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  resize: vertical;
+}
+
 section {
   margin-bottom: 1rem;
 }
@@ -428,6 +513,24 @@ li {
   }
 
   .history-tools-row input {
+    background: #1f2023;
+    color: #e5e7eb;
+    border-color: #4b4f56;
+  }
+
+  .conflict-message {
+    color: #9ca3af;
+  }
+
+  .conflict-file-list li.current {
+    background: #3a2f1a;
+  }
+
+  .conflict-file-list .branch-name {
+    color: #f59e0b;
+  }
+
+  .conflict-textarea {
     background: #1f2023;
     color: #e5e7eb;
     border-color: #4b4f56;
