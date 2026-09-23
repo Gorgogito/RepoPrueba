@@ -4,6 +4,7 @@ import type { PullRequestDetail } from "./PullRequestsPanel";
 
 interface Props {
   repoPath: string;
+  term: string;
   branchNames: string[];
   currentBranch: string;
   onClose: () => void;
@@ -11,7 +12,7 @@ interface Props {
   onError: (message: string) => void;
 }
 
-function CreatePullRequestModal({ repoPath, branchNames, currentBranch, onClose, onCreated, onError }: Props) {
+function CreatePullRequestModal({ repoPath, term, branchNames, currentBranch, onClose, onCreated, onError }: Props) {
   const [head, setHead] = useState(currentBranch);
   const [base, setBase] = useState(branchNames.find((b) => b !== currentBranch) ?? currentBranch);
   const [title, setTitle] = useState("");
@@ -47,7 +48,7 @@ function CreatePullRequestModal({ repoPath, branchNames, currentBranch, onClose,
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-panel clone-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Crear Pull Request</h2>
+          <h2>Crear {term}</h2>
           <button className="secondary" onClick={onClose}>
             Cerrar
           </button>
@@ -86,7 +87,7 @@ function CreatePullRequestModal({ repoPath, branchNames, currentBranch, onClose,
               autoFocus
               value={title}
               onChange={(e) => setTitle(e.currentTarget.value)}
-              placeholder="Título del pull request"
+              placeholder={`Título del ${term.toLowerCase()}`}
               disabled={creating}
             />
           </label>
@@ -110,7 +111,7 @@ function CreatePullRequestModal({ repoPath, branchNames, currentBranch, onClose,
           {error && <p className="error">{error}</p>}
 
           <button type="submit" disabled={creating || !title.trim() || head === base}>
-            {creating ? "Creando..." : "Crear Pull Request"}
+            {creating ? "Creando..." : `Crear ${term}`}
           </button>
         </form>
       </div>

@@ -1,5 +1,6 @@
 pub mod bitbucket;
 pub mod github;
+pub mod gitlab;
 mod token;
 
 use git2::Repository;
@@ -10,6 +11,7 @@ use serde::Serialize;
 pub enum Provider {
     Github,
     Bitbucket,
+    Gitlab,
 }
 
 impl Provider {
@@ -17,6 +19,7 @@ impl Provider {
         match s {
             "github" => Ok(Provider::Github),
             "bitbucket" => Ok(Provider::Bitbucket),
+            "gitlab" => Ok(Provider::Gitlab),
             other => Err(format!("Proveedor desconocido: {other}")),
         }
     }
@@ -25,6 +28,7 @@ impl Provider {
         match self {
             Provider::Github => "github_token",
             Provider::Bitbucket => "bitbucket_token",
+            Provider::Gitlab => "gitlab_token",
         }
     }
 
@@ -32,6 +36,7 @@ impl Provider {
         match self {
             Provider::Github => "GitHub",
             Provider::Bitbucket => "Bitbucket",
+            Provider::Gitlab => "GitLab",
         }
     }
 }
@@ -77,15 +82,18 @@ struct RemoteRef {
 }
 
 /// Detects which provider (if any) a remote URL belongs to and extracts
-/// its owner/repo (GitHub) or workspace/repo_slug (Bitbucket) — same
-/// shape either way, so the rest of the dispatch code doesn't need to
-/// care which one it's talking to.
+/// its owner/repo (GitHub, GitLab) or workspace/repo_slug (Bitbucket) —
+/// same shape either way, so the rest of the dispatch code doesn't need
+/// to care which one it's talking to.
 fn parse_remote(url: &str) -> Option<RemoteRef> {
     if let Some((owner, repo)) = github::parse_remote(url) {
         return Some(RemoteRef { provider: Provider::Github, owner, repo });
     }
     if let Some((owner, repo)) = bitbucket::parse_remote(url) {
         return Some(RemoteRef { provider: Provider::Bitbucket, owner, repo });
+    }
+    if let Some((owner, repo)) = gitlab::parse_remote(url) {
+        return Some(RemoteRef { provider: Provider::Gitlab, owner, repo });
     }
     None
 }
@@ -96,7 +104,8 @@ fn resolve(path: &str) -> Result<RemoteRef, String> {
         .find_remote("origin")
         .map_err(|_| "El repositorio no tiene un remoto 'origin'".to_string())?;
     let url = remote.url().map_err(crate::git::err_msg)?;
-    parse_remote(url).ok_or_else(|| "El remoto 'origin' no es de un proveedor soportado (GitHub o Bitbucket)".to_string())
+    parse_remote(url)
+        .ok_or_else(|| "El remoto 'origin' no es de un proveedor soportado (GitHub, GitLab o Bitbucket)".to_string())
 }
 
 #[derive(Serialize)]
@@ -124,7 +133,7 @@ pub fn provider_status(path: String) -> ProviderStatus {
 
 /// Verifies the credential against the provider's own API and only
 /// persists it once confirmed valid, so a typo never silently "connects"
-/// to nothing. GitHub takes a bearer `token`; Bitbucket takes a
+/// to nothing. GitHub and GitLab take a bearer `token`; Bitbucket takes a
 /// `username` + app-password `secret` pair (HTTP Basic auth).
 #[tauri::command]
 pub async fn provider_connect(
@@ -138,6 +147,12 @@ pub async fn provider_connect(
         Provider::Github => {
             let token = token.filter(|t| !t.is_empty()).ok_or("Falta el token")?;
             let user = github::fetch_user(github::API_BASE, &token).await?;
+            self::token::set_token(provider, &token)?;
+            Ok(user)
+        }
+        Provider::Gitlab => {
+            let token = token.filter(|t| !t.is_empty()).ok_or("Falta el token")?;
+            let user = gitlab::fetch_user(gitlab::API_BASE, &token).await?;
             self::token::set_token(provider, &token)?;
             Ok(user)
         }
@@ -162,7 +177,7 @@ fn require_bitbucket_credential(provider: Provider) -> Result<bitbucket::Credent
     bitbucket::decode_credential(&stored).ok_or_else(|| "Credencial de Bitbucket inválida; reconectá tu cuenta".to_string())
 }
 
-fn require_github_token(provider: Provider) -> Result<String, String> {
+fn require_bearer_token(provider: Provider) -> Result<String, String> {
     self::token::get_token(provider).ok_or_else(|| format!("Conectá tu cuenta de {} primero", provider.label()))
 }
 
@@ -171,8 +186,12 @@ pub async fn provider_list_pull_requests(path: String, state: String) -> Result<
     let r = resolve(&path)?;
     match r.provider {
         Provider::Github => {
-            let token = require_github_token(r.provider)?;
+            let token = require_bearer_token(r.provider)?;
             github::list_pull_requests(github::API_BASE, &token, &r.owner, &r.repo, &state).await
+        }
+        Provider::Gitlab => {
+            let token = require_bearer_token(r.provider)?;
+            gitlab::list_pull_requests(gitlab::API_BASE, &token, &r.owner, &r.repo, &state).await
         }
         Provider::Bitbucket => {
             let credential = require_bitbucket_credential(r.provider)?;
@@ -186,8 +205,12 @@ pub async fn provider_get_pull_request(path: String, number: u64) -> Result<Pull
     let r = resolve(&path)?;
     match r.provider {
         Provider::Github => {
-            let token = require_github_token(r.provider)?;
+            let token = require_bearer_token(r.provider)?;
             github::get_pull_request(github::API_BASE, &token, &r.owner, &r.repo, number).await
+        }
+        Provider::Gitlab => {
+            let token = require_bearer_token(r.provider)?;
+            gitlab::get_pull_request(gitlab::API_BASE, &token, &r.owner, &r.repo, number).await
         }
         Provider::Bitbucket => {
             let credential = require_bitbucket_credential(r.provider)?;
@@ -208,8 +231,12 @@ pub async fn provider_create_pull_request(
     let r = resolve(&path)?;
     match r.provider {
         Provider::Github => {
-            let token = require_github_token(r.provider)?;
+            let token = require_bearer_token(r.provider)?;
             github::create_pull_request(github::API_BASE, &token, &r.owner, &r.repo, &title, &body, &head, &base, draft).await
+        }
+        Provider::Gitlab => {
+            let token = require_bearer_token(r.provider)?;
+            gitlab::create_pull_request(gitlab::API_BASE, &token, &r.owner, &r.repo, &title, &body, &head, &base, draft).await
         }
         Provider::Bitbucket => {
             let credential = require_bitbucket_credential(r.provider)?;
@@ -224,8 +251,12 @@ pub async fn provider_merge_pull_request(path: String, number: u64, method: Stri
     let r = resolve(&path)?;
     match r.provider {
         Provider::Github => {
-            let token = require_github_token(r.provider)?;
+            let token = require_bearer_token(r.provider)?;
             github::merge_pull_request(github::API_BASE, &token, &r.owner, &r.repo, number, &method).await
+        }
+        Provider::Gitlab => {
+            let token = require_bearer_token(r.provider)?;
+            gitlab::merge_pull_request(gitlab::API_BASE, &token, &r.owner, &r.repo, number, &method).await
         }
         Provider::Bitbucket => {
             let credential = require_bitbucket_credential(r.provider)?;

@@ -29,12 +29,18 @@ export interface PullRequestDetail extends PullRequestSummary {
   commits: number;
 }
 
+type Provider = "github" | "bitbucket" | "gitlab";
+
 interface ProviderStatus {
-  provider: "github" | "bitbucket" | null;
+  provider: Provider | null;
   provider_label: string | null;
   has_token: boolean;
   owner: string | null;
   repo: string | null;
+}
+
+function prTerm(provider: Provider | null) {
+  return provider === "gitlab" ? "Merge Request" : "Pull Request";
 }
 
 interface Props {
@@ -125,15 +131,17 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
   if (!status.provider) {
     return (
       <p className="hint">
-        El remoto 'origin' de este repositorio no es de un proveedor soportado todavía (GitHub o Bitbucket).
+        El remoto 'origin' de este repositorio no es de un proveedor soportado todavía (GitHub, GitLab o Bitbucket).
       </p>
     );
   }
 
+  const term = prTerm(status.provider);
+
   if (!status.has_token) {
     return (
       <div className="pr-empty-state">
-        <p className="hint">Conectá tu cuenta de {status.provider_label} para ver, crear y fusionar Pull Requests.</p>
+        <p className="hint">Conectá tu cuenta de {status.provider_label} para ver, crear y fusionar {term}s.</p>
         <button onClick={() => setConnectOpen(true)}>Conectar {status.provider_label}</button>
         {connectOpen && (
           <ProviderConnectModal
@@ -166,12 +174,16 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
             </button>
           ))}
         </div>
-        <button onClick={() => setCreateOpen(true)}>Crear Pull Request</button>
+        <button onClick={() => setCreateOpen(true)}>Crear {term}</button>
       </div>
 
-      {loading && <p className="hint">Cargando pull requests...</p>}
+      {loading && <p className="hint">Cargando {term.toLowerCase()}s...</p>}
 
-      {!loading && prs && prs.length === 0 && <p className="hint">No hay pull requests {stateFilter === "open" ? "abiertos" : ""}.</p>}
+      {!loading && prs && prs.length === 0 && (
+        <p className="hint">
+          No hay {term.toLowerCase()}s {stateFilter === "open" ? "abiertos" : ""}.
+        </p>
+      )}
 
       {!loading && prs && prs.length > 0 && (
         <ul className="pr-list">
@@ -194,6 +206,7 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
       {createOpen && (
         <CreatePullRequestModal
           repoPath={repoPath}
+          term={term}
           branchNames={branchNames}
           currentBranch={currentBranch}
           onClose={() => setCreateOpen(false)}
@@ -228,6 +241,7 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
                     {selected.commits} commits
                   </>
                 )}
+                {status.provider === "gitlab" && selected.changed_files > 0 && <> · {selected.changed_files} archivos</>}
               </p>
 
               {selected.body && <p className="pr-detail-description">{selected.body}</p>}
@@ -239,15 +253,17 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
               {selected.merged ? (
                 <p className="clean">Ya fue fusionado.</p>
               ) : selected.state !== "open" ? (
-                <p className="hint">Este pull request está cerrado.</p>
+                <p className="hint">Este {term.toLowerCase()} está cerrado.</p>
               ) : (
                 <div className="pr-merge-row">
                   <select value={mergeMethod} onChange={(e) => setMergeMethod(e.currentTarget.value)} disabled={merging}>
                     <option value="merge">Merge commit</option>
                     <option value="squash">Squash and merge</option>
-                    <option value="rebase">
-                      {status.provider === "bitbucket" ? "Fast-forward merge" : "Rebase and merge"}
-                    </option>
+                    {status.provider !== "gitlab" && (
+                      <option value="rebase">
+                        {status.provider === "bitbucket" ? "Fast-forward merge" : "Rebase and merge"}
+                      </option>
+                    )}
                   </select>
                   <button onClick={handleMerge} disabled={merging || selected.mergeable === false}>
                     {merging ? "Fusionando..." : "Fusionar"}
