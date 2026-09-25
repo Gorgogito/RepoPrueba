@@ -494,6 +494,7 @@ button:disabled {
 .branch-name {
   display: flex;
   align-items: center;
+  gap: 0.4em;
   flex: 1;
   text-align: left;
   background: transparent;
@@ -507,6 +508,33 @@ button:disabled {
 
 .branch-name:disabled {
   cursor: default;
+}
+
+button.branch-name:not(:disabled):hover {
+  color: #396cd8;
+  text-decoration: underline;
+}
+
+button.branch-name:not(:disabled):hover .branch-switch-icon {
+  opacity: 1;
+}
+
+.branch-name-current {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  padding: 0.3em 0.2em;
+  font-size: 0.85em;
+  font-family: "SF Mono", Consolas, monospace;
+}
+
+.branch-switch-icon {
+  flex-shrink: 0;
+  opacity: 0.45;
+}
+
+.branch-sidebar-subheader {
+  margin-top: 1rem;
 }
 
 button {

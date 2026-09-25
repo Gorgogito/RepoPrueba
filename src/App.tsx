@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import BranchSidebar, { BranchInfo } from "./components/BranchSidebar";
 import CommitPanel, { RepoStatus } from "./components/CommitPanel";
@@ -121,6 +122,32 @@ function App() {
     }
   }
 
+  // Always points at the latest refresh() so the repo-changed listener
+  // below (subscribed once, on mount) never closes over a stale repo.
+  const refreshRef = useRef(refresh);
+  useEffect(() => {
+    refreshRef.current = refresh;
+  });
+
+  // Watches the open repo's .git/HEAD and refs for changes made outside
+  // Stash (the integrated terminal, another tool, a teammate's script) so
+  // the UI never goes stale without the user having to do anything.
+  useEffect(() => {
+    if (!repo) return;
+    invoke("watch_repository", { path: repo.path }).catch((err) => setError(String(err)));
+  }, [repo?.path]);
+
+  useEffect(() => {
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const unlistenPromise = listen("repo-changed", () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => refreshRef.current(), 300);
+    });
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, []);
 
 
   async function forgetRepo(path: string) {
@@ -305,6 +332,7 @@ function App() {
             <BranchSidebar
               repoPath={repo.path}
               branches={branches}
+              refreshToken={historyVersion}
               onChanged={refresh}
               onError={setError}
               onInteractiveRebase={(onto, label) => setRebasePlan({ onto, label })}

@@ -103,7 +103,7 @@ function ConflictResolver({ repoPath, operation, onChanged, onError }: Props) {
           {operation.message && <p className="conflict-message">{operation.message.split("\n")[0]}</p>}
           {operation.paused_reason === "edit" && (
             <p className="conflict-message">
-              Editando este commit: modificá lo que necesites en la pestaña Cambios y tocá Continuar.
+              Editando este commit: modifica lo que necesites en la pestaña Cambios y presiona Continuar.
             </p>
           )}
         </div>

@@ -141,7 +141,7 @@ function PullRequestsPanel({ repoPath, branchNames, currentBranch, refreshToken,
   if (!status.has_token) {
     return (
       <div className="pr-empty-state">
-        <p className="hint">Conectá tu cuenta de {status.provider_label} para ver, crear y fusionar {term}s.</p>
+        <p className="hint">Conecta tu cuenta de {status.provider_label} para ver, crear y fusionar {term}s.</p>
         <button onClick={() => setConnectOpen(true)}>Conectar {status.provider_label}</button>
         {connectOpen && (
           <ProviderConnectModal

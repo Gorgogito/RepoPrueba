@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { IconMerge, IconRebase, IconRebaseInteractive, IconClose, IconDot } from "./icons";
+import { IconMerge, IconRebase, IconRebaseInteractive, IconCheckout, IconClose, IconDot } from "./icons";
 
 export interface BranchInfo {
   name: string;
@@ -8,25 +8,63 @@ export interface BranchInfo {
   upstream: string | null;
 }
 
+interface RemoteBranchInfo {
+  name: string;
+  remote: string;
+  branch: string;
+  has_local: boolean;
+}
+
 interface Props {
   repoPath: string;
   branches: BranchInfo[];
+  refreshToken: number;
   onChanged: () => void;
   onError: (message: string) => void;
   onInteractiveRebase: (onto: string, ontoLabel: string) => void;
 }
 
-function BranchSidebar({ repoPath, branches, onChanged, onError, onInteractiveRebase }: Props) {
+function BranchSidebar({ repoPath, branches, refreshToken, onChanged, onError, onInteractiveRebase }: Props) {
   const [newBranchName, setNewBranchName] = useState("");
   const [creating, setCreating] = useState(false);
   const [busyBranch, setBusyBranch] = useState<string | null>(null);
+  const [remoteBranches, setRemoteBranches] = useState<RemoteBranchInfo[]>([]);
 
-  async function handleSwitch(name: string) {
+  async function loadRemoteBranches() {
     try {
-      await invoke("checkout_branch", { path: repoPath, name });
-      onChanged();
+      const all = await invoke<RemoteBranchInfo[]>("list_remote_branches", { path: repoPath });
+      setRemoteBranches(all.filter((r) => !r.has_local));
     } catch (err) {
       onError(String(err));
+    }
+  }
+
+  useEffect(() => {
+    loadRemoteBranches();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [repoPath, refreshToken]);
+
+  async function handleSwitch(name: string) {
+    setBusyBranch(name);
+    try {
+      await invoke("checkout_branch", { path: repoPath, name });
+    } catch (err) {
+      onError(String(err));
+    } finally {
+      setBusyBranch(null);
+      onChanged();
+    }
+  }
+
+  async function handleSwitchRemote(r: RemoteBranchInfo) {
+    setBusyBranch(r.name);
+    try {
+      await invoke("checkout_remote_branch", { path: repoPath, remoteRef: r.name, localName: r.branch });
+    } catch (err) {
+      onError(String(err));
+    } finally {
+      setBusyBranch(null);
+      onChanged();
     }
   }
 
@@ -103,10 +141,22 @@ function BranchSidebar({ repoPath, branches, onChanged, onError, onInteractiveRe
       <ul className="branch-list">
         {branches.map((b) => (
           <li key={b.name} className={b.is_head ? "current" : ""}>
-            <button className="branch-name" onClick={() => handleSwitch(b.name)} disabled={b.is_head}>
-              {b.is_head && <IconDot className="current-dot" />}
-              {b.name}
-            </button>
+            {b.is_head ? (
+              <span className="branch-name branch-name-current">
+                <IconDot className="current-dot" />
+                {b.name}
+              </span>
+            ) : (
+              <button
+                className="branch-name"
+                onClick={() => handleSwitch(b.name)}
+                disabled={busyBranch !== null}
+                title={`Cambiar a la rama '${b.name}'`}
+              >
+                <IconCheckout className="branch-switch-icon" />
+                {b.name}
+              </button>
+            )}
             {!b.is_head && (
               <span className="branch-actions">
                 <button
@@ -149,6 +199,29 @@ function BranchSidebar({ repoPath, branches, onChanged, onError, onInteractiveRe
           </li>
         ))}
       </ul>
+
+      {remoteBranches.length > 0 && (
+        <>
+          <div className="branch-sidebar-header branch-sidebar-subheader">
+            <h3>Ramas remotas</h3>
+          </div>
+          <ul className="branch-list">
+            {remoteBranches.map((r) => (
+              <li key={r.name}>
+                <button
+                  className="branch-name"
+                  onClick={() => handleSwitchRemote(r)}
+                  disabled={busyBranch !== null}
+                  title={`Crear rama local '${r.branch}' desde '${r.name}' y cambiar a ella`}
+                >
+                  <IconCheckout className="branch-switch-icon" />
+                  {r.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </aside>
   );
 }

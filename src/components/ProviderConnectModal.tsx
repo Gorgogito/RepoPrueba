@@ -85,7 +85,7 @@ function ProviderConnectModal({ provider, providerLabel, onClose, onConnected }:
             </p>
           ) : (
             <p className="hint small">
-              Necesitás un Personal Access Token con permiso <code>{provider === "github" ? "repo" : "api"}</code>.{" "}
+              Necesitas un Personal Access Token con permiso <code>{provider === "github" ? "repo" : "api"}</code>.{" "}
               <button type="button" className="link-button" onClick={() => openUrl(help.url)}>
                 {help.label}
               </button>

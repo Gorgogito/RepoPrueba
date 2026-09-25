@@ -49,6 +49,16 @@ export function IconRebaseInteractive(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function IconCheckout(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base(props)}>
+      <path d="M2.5 8H11" />
+      <path d="M8 4.5L11.5 8L8 11.5" />
+      <path d="M13.5 3.5V12.5" />
+    </svg>
+  );
+}
+
 export function IconClose(props: SVGProps<SVGSVGElement>) {
   return (
     <svg {...base(props)}>

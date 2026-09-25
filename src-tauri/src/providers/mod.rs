@@ -173,12 +173,12 @@ pub fn provider_disconnect(provider: String) -> Result<(), String> {
 }
 
 fn require_bitbucket_credential(provider: Provider) -> Result<bitbucket::Credential, String> {
-    let stored = self::token::get_token(provider).ok_or_else(|| format!("Conectá tu cuenta de {} primero", provider.label()))?;
-    bitbucket::decode_credential(&stored).ok_or_else(|| "Credencial de Bitbucket inválida; reconectá tu cuenta".to_string())
+    let stored = self::token::get_token(provider).ok_or_else(|| format!("Conecta tu cuenta de {} primero", provider.label()))?;
+    bitbucket::decode_credential(&stored).ok_or_else(|| "Credencial de Bitbucket inválida; reconecta tu cuenta".to_string())
 }
 
 fn require_bearer_token(provider: Provider) -> Result<String, String> {
-    self::token::get_token(provider).ok_or_else(|| format!("Conectá tu cuenta de {} primero", provider.label()))
+    self::token::get_token(provider).ok_or_else(|| format!("Conecta tu cuenta de {} primero", provider.label()))
 }
 
 #[tauri::command]

@@ -1,6 +1,7 @@
 mod git;
 mod providers;
 mod terminal;
+mod watcher;
 mod workspace;
 
 use tauri::Manager;
@@ -12,6 +13,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(git::undo::UndoState::default())
         .manage(terminal::TerminalState::default())
+        .manage(watcher::WatcherState::default())
         .invoke_handler(tauri::generate_handler![
             git::repo::open_repository,
             git::repo::get_repo_status,
@@ -19,6 +21,9 @@ pub fn run() {
             git::branches::create_branch,
             git::branches::checkout_branch,
             git::branches::delete_branch,
+            git::branches::list_remote_branches,
+            git::branches::checkout_remote_branch,
+            watcher::watch_repository,
             git::changes::stage_file,
             git::changes::unstage_file,
             git::changes::commit,

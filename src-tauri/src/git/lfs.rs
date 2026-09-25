@@ -27,7 +27,7 @@ fn require_lfs() -> Result<(), String> {
     if lfs_available() {
         Ok(())
     } else {
-        Err("Git LFS no está instalado. Instalalo desde git-lfs.com y volvé a intentar".to_string())
+        Err("Git LFS no está instalado. Instálalo desde git-lfs.com y vuelve a intentar".to_string())
     }
 }
 

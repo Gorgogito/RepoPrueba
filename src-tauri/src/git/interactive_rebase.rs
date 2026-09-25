@@ -246,7 +246,7 @@ pub fn start_interactive_rebase(path: String, onto: String, steps: Vec<RebaseSte
 
     let head_ref = repo.head().map_err(err_msg)?;
     if !head_ref.is_branch() {
-        return Err("Necesitás estar en una rama (no HEAD desacoplado) para iniciar un rebase interactivo".to_string());
+        return Err("Necesitas estar en una rama (no HEAD desacoplado) para iniciar un rebase interactivo".to_string());
     }
     let original_branch_ref = head_ref.name().map_err(err_msg)?.to_string();
     let original_tip_oid = head_ref.peel_to_commit().map_err(err_msg)?.id();

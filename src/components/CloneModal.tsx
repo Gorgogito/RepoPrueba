@@ -59,7 +59,7 @@ function CloneModal({ onClose, onCloned }: Props) {
           <label className="clone-form-label">
             Carpeta destino
             <div className="clone-destination-row">
-              <input value={parentDir ?? ""} readOnly placeholder="Elegí dónde guardarlo" />
+              <input value={parentDir ?? ""} readOnly placeholder="Elige dónde guardarlo" />
               <button type="button" className="secondary" onClick={pickDestination} disabled={cloning}>
                 Elegir...
               </button>
